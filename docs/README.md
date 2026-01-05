@@ -1,3 +1,14 @@
+## Ursprung & Lizenz
+
+Dieses Projekt basiert auf dem Open-Source-Projekt  
+https://github.com/SBorg2014/WLAN-Wetterstation
+
+Originalautor:
+- SBorg2014 (MIT License)
+
+Weiterentwicklung & Anpassungen:
+- ludda78
+
 # Wetterstation Statistik für ioBroker & InfluxDB
 
 Dieses Projekt stellt ein erweitertes Statistik-Skript für WLAN-Wetterstationen

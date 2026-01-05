@@ -5,7 +5,7 @@
  * https://github.com/SBorg2014/WLAN-Wetterstation
  *
  * Erweiterungen & Anpassungen:
- * (c) 2025–2026 <DEIN NAME>
+ * (c) 2025–2026 ludda78
  *
  * - Zeitgewichtete Tagesdurchschnittstemperatur
  * - Korrekte Initialisierung des Jahresdurchschnitts am 01.01.
@@ -21,6 +21,7 @@
 
 
         by ludda78
+    v2.0.7 - 05.01.2026 Berechnung Jahresdurchschnitt am 1.1 mit Tagesdurschnitt vom 1.1.
     v2.0.6 - 02.02.2025 Berechnung des Monatsdurchschnitts angepasst, speichern_monat verschoben, 
                         da letzter Tag nicht in Berechnung der Monatsstatistik mit drin
    (c)2020-2024 by SBorg
@@ -107,7 +108,7 @@ const DP_Check ='aktueller_Monat.Regentage';
 if (!existsState(PRE_DP+'.'+DP_Check)) { createDP(DP_Check); }
 
 //Start des Scripts
-    const ScriptVersion = "V2.0.5";
+    const ScriptVersion = "V2.0.7";
     const dayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     let Tiefstwert, Hoechstwert, Temp_Durchschnitt, Max_Windboee, Max_Regenmenge, Regenmenge_Monat, warme_Tage, Sommertage;
     let heisse_Tage, Frost_Tage, kalte_Tage, Eistage, sehr_kalte_Tage, Wuestentage, Tropennaechte, Trockenperiode_akt;
@@ -369,8 +370,32 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
        if (getState(PRE_DP+'.Jahreswerte.Temperatur_Hoechstwert').val < Hoechstwert) {setState(PRE_DP+'.Jahreswerte.Temperatur_Hoechstwert', Hoechstwert, true);}
        if (getState(PRE_DP+'.Jahreswerte.Temperatur_Tiefstwert').val > Tiefstwert) {setState(PRE_DP+'.Jahreswerte.Temperatur_Tiefstwert', Tiefstwert, true);}
        //Temperaturdurchschnitt
-       let JahresTemp_Durchschnitt=Math.round(((getState(PRE_DP+'.Jahreswerte.Temperatur_Durchschnitt').val * (tag_des_jahres-1) + Temp_Durchschnitt)/tag_des_jahres)*100)/100;
-       setState(PRE_DP+'.Jahreswerte.Temperatur_Durchschnitt', JahresTemp_Durchschnitt, true);
+	   // --- Korrektur Initialwert Jahresdurchschnitt am 01.01. ---
+		if (tag_des_jahres === 1) {
+			// Am 01.01. direkt mit dem Tagesdurchschnitt initialisieren
+			setState(
+				PRE_DP + '.Jahreswerte.Temperatur_Durchschnitt',
+				Temp_Durchschnitt,
+				true
+			);
+		} else {
+			// Ab dem 02.01. gleitender Mittelwert über Tagesdurchschnitte
+			let JahresTemp_Durchschnitt =
+				Math.round(
+					(
+						(getState(PRE_DP + '.Jahreswerte.Temperatur_Durchschnitt').val * (tag_des_jahres - 1)
+						+ Temp_Durchschnitt)
+						/ tag_des_jahres
+					) * 100
+				) / 100;
+
+			setState(
+				PRE_DP + '.Jahreswerte.Temperatur_Durchschnitt',
+				JahresTemp_Durchschnitt,
+				true
+			);
+		}
+
        //Regenmenge
        if (getState(PRE_DP+'.Jahreswerte.Regenmengetag').val < Max_Regenmenge) {setState(PRE_DP+'.Jahreswerte.Regenmengetag', Max_Regenmenge, true);}
        
