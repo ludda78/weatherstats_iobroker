@@ -1,3 +1,17 @@
+/*
+ * Basierend auf:
+ * WLAN-Wetterstation Statistik
+ * (c) 2019–2024 SBorg2014
+ * https://github.com/SBorg2014/WLAN-Wetterstation
+ *
+ * Erweiterungen & Anpassungen:
+ * (c) 2025–2026 <DEIN NAME>
+ *
+ * - Zeitgewichtete Tagesdurchschnittstemperatur
+ * - Korrekte Initialisierung des Jahresdurchschnitts am 01.01.
+ *
+ * Lizenz: MIT
+ */
 /* Wetterstation-Statistiken 
 
    holt die Messdaten aus einer InfluxDB V2 und erstellt eine Monats-, Vorjahresmonat- und
@@ -6,7 +20,7 @@
             Auch keine Aliase unter Influx nutzen!
 
 
-        by Mwö
+        by ludda78
     v2.0.6 - 02.02.2025 Berechnung des Monatsdurchschnitts angepasst, speichern_monat verschoben, 
                         da letzter Tag nicht in Berechnung der Monatsstatistik mit drin
    (c)2020-2024 by SBorg
