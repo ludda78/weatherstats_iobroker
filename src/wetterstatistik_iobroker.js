@@ -136,6 +136,11 @@ function main() {
         }
     }
 	let temps = [], wind = [], regen = [], start, end, zeitstempel = new Date();
+
+	// Referenzdatum = Vortag (für Tages-, Monats- und Jahreslogik)
+	let refDate = new Date(zeitstempel);
+	refDate.setDate(refDate.getDate() - 1);
+
     let start_ts = new Date(zeitstempel.getFullYear(),zeitstempel.getMonth(),zeitstempel.getDate()-1,0,0,0);
     start = start_ts.getTime();
     let end_ts = new Date(zeitstempel.getFullYear(),zeitstempel.getMonth(),zeitstempel.getDate()-1,23,59,59);
@@ -328,11 +333,11 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
 */
 
 // Tag des Jahres berechnen
-   let Jahr = zeitstempel.getFullYear();
-   let heutestart = Number(new Date(zeitstempel.setHours(0,0,0,0)));
-   let neujahr = Number(new Date(Jahr,0,1));
-   let difftage = (heutestart - neujahr) / (24*60*60*1000) + 1;
-   let tag_des_jahres = Math.ceil(difftage);
+	let Jahr = refDate.getFullYear();
+	let heutestart = Number(new Date(refDate.setHours(0,0,0,0)));
+	let neujahr = Number(new Date(Jahr,0,1));
+	let difftage = (heutestart - neujahr) / (24*60*60*1000) + 1;
+	let tag_des_jahres = Math.ceil(difftage);
    
     //console.log('Tiefstwert Monat bisher: ' + getState(PRE_DP+'.aktueller_Monat.Tiefstwert').val);
    // Datenpunkte schreiben
@@ -364,7 +369,6 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
                    Regentage_Jahr = getState(PRE_DP + '.Jahreswerte.Regentage').val + 1; setState(PRE_DP + '.Jahreswerte.Regentage', Regentage_Jahr, true);
              }
 
-
     //Jahresstatistik
        //Temperatur
        if (getState(PRE_DP+'.Jahreswerte.Temperatur_Hoechstwert').val < Hoechstwert) {setState(PRE_DP+'.Jahreswerte.Temperatur_Hoechstwert', Hoechstwert, true);}
@@ -379,15 +383,27 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
 				true
 			);
 		} else {
-			// Ab dem 02.01. gleitender Mittelwert über Tagesdurchschnitte
-			let JahresTemp_Durchschnitt =
-				Math.round(
-					(
-						(getState(PRE_DP + '.Jahreswerte.Temperatur_Durchschnitt').val * (tag_des_jahres - 1)
-						+ Temp_Durchschnitt)
-						/ tag_des_jahres
-					) * 100
-				) / 100;
+			const prevYearAvg =
+				getState(PRE_DP + '.Jahreswerte.Temperatur_Durchschnitt').val;
+
+			const numerator =
+				(prevYearAvg * (tag_des_jahres - 1)) + Temp_Durchschnitt;
+
+			const unrounded =
+				numerator / tag_des_jahres;
+
+			const JahresTemp_Durchschnitt =
+				Math.round(unrounded * 100) / 100;
+
+			log(
+				`[JAHRES-DEBUG] ELSE | tag_des_jahres=${tag_des_jahres}` +
+				` | prevYearAvg=${prevYearAvg}` +
+				` | Temp_Durchschnitt=${Temp_Durchschnitt}` +
+				` | numerator=(${prevYearAvg} * ${tag_des_jahres - 1}) + ${Temp_Durchschnitt} = ${numerator}` +
+				` | unrounded=${unrounded}` +
+				` | rounded=${JahresTemp_Durchschnitt}`,
+				'info'
+			);
 
 			setState(
 				PRE_DP + '.Jahreswerte.Temperatur_Durchschnitt',
