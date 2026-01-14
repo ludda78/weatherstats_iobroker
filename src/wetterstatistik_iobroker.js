@@ -302,7 +302,7 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
   //Regen (Regentag = Mindestmenge größer oder gleich 0.1mm)
     if (regen.length == 0) { Max_Regenmenge = 0; } 
       else { 
-        Max_Regenmenge = Math.max(...regen);
+        Max_Regenmenge = regen[regen.length - 1];
         if (Max_Regenmenge >= 0.1) { Regentage = 1; } else { Regentage = 0; }
     }
 
