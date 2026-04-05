@@ -219,7 +219,13 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
         for (let i = 0; i < result.result[1].length; i++) { wind[i] = result.result[1][i]._value; }
         for (let i = 0; i < result.result[2].length; i++) { regen[i] = result.result[2][i]._value; }
     }
-                                   
+
+    if (temps.length === 0) {
+        console.error('[main] Keine Temperaturdaten für den Vortag vorhanden!');
+        Statusmeldung('Fehler: Keine Temperaturdaten');
+        return;
+    }
+
     //console.log('Tiefstwert bisher: ' + Tiefstwert);
     //Temperaturen
     Tiefstwert = Math.min(...temps);
@@ -653,7 +659,7 @@ function VorJahr() {
         let start, end, temps = [], wind = [], regen = [];
         start = new Date(zeitstempel.getFullYear()-1,zeitstempel.getMonth(),1,0,0,0);
         start = start.getTime();
-        end = new Date(zeitstempel.getFullYear()-1,zeitstempel.getMonth(),monatstage[zeitstempel.getMonth()],23,59,59);
+        end = new Date(zeitstempel.getFullYear()-1,zeitstempel.getMonth()+1,0,23,59,59); // Tag 0 des Folgemonats = letzter Tag des Vorjahresmonats (Schaltjahr-sicher)
         end = end.getTime(); 
             
              sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query', 
@@ -689,25 +695,38 @@ function VorJahr() {
 
                 //let's do Gradtage...
                 let MonatsTag, MonatsTag_old, Temp, Hit = [false,false,false,false,false,false,false,false,false];
+                let tagesMaxTemp = -Infinity; // für Eistag-Erkennung (Höchstwert des Tages < 0°C)
                 //Reset der Gradtage je nachdem ob Daten vorhanden oder nicht
                 if (typeof result.result[0][0] !== "undefined") { Vwarme_Tage=0, VSommertage=0, Vheisse_Tage=0, VFrost_Tage=0, Vkalte_Tage=0, VEistage=0, Vsehr_kalte_Tage=0, VWuestentage=0, VTropennaechte=0, VRegentage=0; }
-                
+
                 for (let i = 0; i < result.result[0].length; i++) {
                     MonatsTag = new Date(result.result[0][i].ts).getDate();
-                    if (MonatsTag != MonatsTag_old) { Hit=[false,false,false,false,false,false,false,false,true]; }
+                    if (MonatsTag != MonatsTag_old) {
+                        // Tagesabschluss: Eistag und Tropennacht für den abgeschlossenen Vortag auswerten
+                        if (MonatsTag_old !== undefined) {
+                            if (tagesMaxTemp < 0) { VEistage++; }  // Eistag: Höchstwert des Tages unter 0°C
+                            if (Hit[8]) { VTropennaechte++; }       // Tropennacht: kein Messwert unter 20°C
+                        }
+                        Hit=[false,false,false,false,false,false,false,false,true];
+                        tagesMaxTemp = -Infinity;
+                    }
                     Temp = result.result[0][i].value;
+                    tagesMaxTemp = Math.max(tagesMaxTemp, Temp);
                      if (Temp > 20 && Hit[0] == false) { Vwarme_Tage++; Hit[0] = true; }
                      if (Temp > 25 && Hit[1] == false) { VSommertage++; Hit[1] = true; }
                      if (Temp > 30 && Hit[2] == false) { Vheisse_Tage++; Hit[2] = true; }
                      if (Temp < 0 && Hit[3] == false) { VFrost_Tage++; Hit[3] = true; }
                      if (Temp < 10 && Hit[4] == false) { Vkalte_Tage++; Hit[4] = true; }
-                     if (Temp < 0 && Hit[5] == false) { VEistage++; Hit[5] = true; }
                      if (Temp < -10 && Hit[6] == false) { Vsehr_kalte_Tage++; Hit[6] = true; }
                      if (Temp >= 35 && Hit[7] == false) { VWuestentage++; Hit[7] = true; }
                      if (Temp < 20 && Hit[8] == true) { Hit[8] = false; }
-                    MonatsTag_old=MonatsTag; 
+                    MonatsTag_old=MonatsTag;
+                }
+                // Letzten Tag des Monats abschließen
+                if (result.result[0].length > 0) {
+                    if (tagesMaxTemp < 0) { VEistage++; }
                     if (Hit[8]) { VTropennaechte++; }
-                } 
+                }
 
                 //Wind
                 let VMax_Windboee = Math.max(...wind);
@@ -715,6 +734,7 @@ function VorJahr() {
                 //Regen
                 let VMax_Regenmenge = Math.max(...regen);
                 let VRegenmenge_Monat=0, Rain = [];
+                MonatsTag_old = undefined; // Reset: verhindert falschen Tagesvergleich mit letztem Temp-Wert
                 for (let i = 0; i < result.result[2].length; i++) {
                     MonatsTag = new Date(result.result[2][i].ts).getDate();
                     Rain[i] = result.result[2][i].value;
@@ -722,7 +742,7 @@ function VorJahr() {
                         VRegenmenge_Monat+= Math.max(...Rain);
                         if (Math.max(...Rain) >= 0.1) { VRegentage++; }
                         Rain.length=0; }
-                    MonatsTag_old=MonatsTag; 
+                    MonatsTag_old=MonatsTag;
                 }
                 if (typeof result.result[0][0] === "undefined") { VRegenmenge_Monat=99999; } //keine Daten vom Vorjahresmonat
 
@@ -898,19 +918,19 @@ async function Template_Rekordwerte(DatenPunkt, DatenPunktName) {
     } else { REKORDWERTEAUSGABE = REKORDWERTE_AUSGABEFORMAT; }
 
     //[TAG]
-    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[TAG]", new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400).getDate()); 
+    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[TAG]", new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400000).getDate()); 
 
     //[MONAT]
-    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[MONAT]", monatsname[new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400).getMonth()]);
+    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[MONAT]", monatsname[new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400000).getMonth()]);
 
     //[MONAT_ZAHL]
-    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[MONAT_ZAHL]", pad(new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400).getMonth()+1));
+    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[MONAT_ZAHL]", pad(new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400000).getMonth()+1));
 
     //[MONAT_KURZ]
-    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[MONAT_KURZ]", monatsname_kurz[new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400).getMonth()]);
+    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[MONAT_KURZ]", monatsname_kurz[new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400000).getMonth()]);
 
     //[JAHR]
-    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[JAHR]", new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400).getFullYear());
+    REKORDWERTEAUSGABE = REKORDWERTEAUSGABE.replace("[JAHR]", new Date((getState(PRE_DP+'.Rekordwerte.value.'+DatenPunkt).lc)-86400000).getFullYear());
 
     //Spezialpatch für 1 Tag
     if ((REKORDWERTEAUSGABE.search("Tage") != -1) && (wert == 1)) {
