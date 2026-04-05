@@ -21,6 +21,13 @@
 
 
         by ludda78
+    v2.1.0 - 05.04.2026 +Sonnenscheindauer und Solarenergie (VorTag, Monat, Jahr, Rekord)
+                        ~Fix Rekordwert-Datum: -86400 → -86400000 (ms statt s)
+                        ~Fix VorJahr: Eistag-Bedingung korrigiert (Höchstwert < 0°C)
+                        ~Fix VorJahr: Tropennächte werden jetzt einmal pro Tag gezählt
+                        ~Fix VorJahr: Schaltjahr-Bug bei Monatsende behoben
+                        ~Fix VorJahr: MonatsTag_old vor Regen-Schleife zurückgesetzt
+                        ~Fix main: Guard gegen leeres Temperatur-Array
     v2.0.7 - 05.01.2026 Berechnung Jahresdurchschnitt am 1.1 mit Tagesdurschnitt vom 1.1.
     v2.0.6 - 02.02.2025 Berechnung des Monatsdurchschnitts angepasst, speichern_monat verschoben, 
                         da letzter Tag nicht in Berechnung der Monatsstatistik mit drin
@@ -108,12 +115,13 @@ const DP_Check ='aktueller_Monat.Regentage';
 if (!existsState(PRE_DP+'.'+DP_Check)) { createDP(DP_Check); }
 
 //Start des Scripts
-    const ScriptVersion = "V2.0.7";
+    const ScriptVersion = "V2.1.0";
     const dayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     let Tiefstwert, Hoechstwert, Temp_Durchschnitt, Max_Windboee, Max_Regenmenge, Regenmenge_Monat, warme_Tage, Sommertage;
     let heisse_Tage, Frost_Tage, kalte_Tage, Eistage, sehr_kalte_Tage, Wuestentage, Tropennaechte, Trockenperiode_akt;
     let kalte_Tage_Jahr, warme_Tage_Jahr, Sommertage_Jahr, heisse_Tage_Jahr, Frosttage_Jahr, Eistage_Jahr, sehrkalte_Tage_Jahr, Wuestentage_Jahr, Tropennaechte_Jahr;
     let Regentage, Regentage_Jahr;
+    let Sonnenschein_VorTag, Solarenergie_VorTag;
     let monatstage = [31,28,31,30,31,30,31,31,30,31,30,31];
     let monatsname = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
     let monatsname_kurz = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
@@ -133,6 +141,18 @@ function main() {
         if (!isNaN(regenJahr)) {
             setState(PRE_DP + '.Jahreswerte.Regenmenge', regenJahr, true);
             console.log('[Jahreswerte] Regenmenge gesetzt:', regenJahr);
+        }
+    }
+    if (existsState(WET_DP_BROKER + '.Sonnenschein_Jahr')) {
+        const sonnenscheinJahr = getState(WET_DP_BROKER + '.Sonnenschein_Jahr').val;
+        if (!isNaN(sonnenscheinJahr)) {
+            setState(PRE_DP + '.Jahreswerte.Sonnenscheindauer', sonnenscheinJahr, true);
+        }
+    }
+    if (existsState(WET_DP_BROKER + '.Solarenergie_Jahr')) {
+        const solarenergieJahr = getState(WET_DP_BROKER + '.Solarenergie_Jahr').val;
+        if (!isNaN(solarenergieJahr)) {
+            setState(PRE_DP + '.Jahreswerte.Solarenergie', solarenergieJahr, true);
         }
     }
 	let temps = [], wind = [], regen = [], start, end, zeitstempel = new Date();
@@ -328,6 +348,18 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
     setState(PRE_DP+'.VorTag.Regenmenge', Max_Regenmenge, true);
     setState(PRE_DP+'.VorTag.Windboee_max', Max_Windboee, true);
 
+    //Sonnenschein + Solarenergie VorTag
+    Sonnenschein_VorTag = existsState(WET_DP_BROKER + '.Sonnenschein_VorTag') ? (getState(WET_DP_BROKER + '.Sonnenschein_VorTag').val || 0) : 0;
+    Solarenergie_VorTag = existsState(WET_DP_BROKER + '.Solarenergie_VorTag') ? (getState(WET_DP_BROKER + '.Solarenergie_VorTag').val || 0) : 0;
+    setState(PRE_DP + '.VorTag.Sonnenscheindauer', Sonnenschein_VorTag, true);
+    setState(PRE_DP + '.VorTag.Solarenergie', Solarenergie_VorTag, true);
+    // Monatliche Akkumulation
+    setState(PRE_DP + '.aktueller_Monat.Sonnenscheindauer', getState(PRE_DP + '.aktueller_Monat.Sonnenscheindauer').val + Sonnenschein_VorTag, true);
+    setState(PRE_DP + '.aktueller_Monat.Solarenergie', Number((getState(PRE_DP + '.aktueller_Monat.Solarenergie').val + Solarenergie_VorTag).toFixed(1)), true);
+    // Jahres-Maximum pro Tag
+    if (getState(PRE_DP + '.Jahreswerte.Sonnenschein_Max_Tag').val < Sonnenschein_VorTag) { setState(PRE_DP + '.Jahreswerte.Sonnenschein_Max_Tag', Sonnenschein_VorTag, true); }
+    if (getState(PRE_DP + '.Jahreswerte.Solarenergie_Max_Tag').val < Solarenergie_VorTag) { setState(PRE_DP + '.Jahreswerte.Solarenergie_Max_Tag', Solarenergie_VorTag, true); }
+
 //auskommentiert weil die daten des letzten Tages noch fehlen, speichern der Montasdaten erst zu späterem Zeitpunkt
 /* //nun beenden falls Monatserster    
   if (zeitstempel.getDate() == 1) { 
@@ -514,6 +546,10 @@ function Reset_Jahresstatistik() {
         setState(PRE_DP + '.Jahreswerte.Gradtage_Tropennaechte',  0,    true);
         setState(PRE_DP + '.Jahreswerte.Regentage',               0,    true);
         setState(PRE_DP + '.Jahreswerte.Regenmenge',              0,    true);
+        setState(PRE_DP + '.Jahreswerte.Sonnenscheindauer',       0,    true);
+        setState(PRE_DP + '.Jahreswerte.Solarenergie',            0,    true);
+        setState(PRE_DP + '.Jahreswerte.Sonnenschein_Max_Tag',    0,    true);
+        setState(PRE_DP + '.Jahreswerte.Solarenergie_Max_Tag',    0,    true);
 
         setState(PRE_DP+'.Control.Reset_Jahresstatistik', false, true);
 } //end function
@@ -568,13 +604,20 @@ function speichern_Monat() {
     Wuestentage = getState(PRE_DP + '.aktueller_Monat.Wuestentage').val;
     Tropennaechte = getState(PRE_DP + '.aktueller_Monat.Tropennaechte').val;
     Regentage = getState(PRE_DP + '.aktueller_Monat.Regentage').val;
+    let Sonnenscheindauer_Monat = getState(PRE_DP + '.aktueller_Monat.Sonnenscheindauer').val;
+    let Solarenergie_Monat = getState(PRE_DP + '.aktueller_Monat.Solarenergie').val;
     //ggf. höchste Monatsregenmenge im Jahr schreiben
-    if (getState(PRE_DP+'.Jahreswerte.Regenmengemonat').val <= Regenmenge_Monat) {setState(PRE_DP+'.Jahreswerte.Regenmengemonat', Regenmenge_Monat, true);} 
+    if (getState(PRE_DP+'.Jahreswerte.Regenmengemonat').val <= Regenmenge_Monat) {setState(PRE_DP+'.Jahreswerte.Regenmengemonat', Regenmenge_Monat, true);}
+    //ggf. höchste Monatssonnenscheindauer im Jahr schreiben
+    if (getState(PRE_DP+'.Jahreswerte.Sonnenschein_Max_Monat').val <= Sonnenscheindauer_Monat) {setState(PRE_DP+'.Jahreswerte.Sonnenschein_Max_Monat', Sonnenscheindauer_Monat, true);}
+    //ggf. höchste Monatssolarenergie im Jahr schreiben
+    if (getState(PRE_DP+'.Jahreswerte.Solarenergie_Max_Monat').val <= Solarenergie_Monat) {setState(PRE_DP+'.Jahreswerte.Solarenergie_Max_Monat', Solarenergie_Monat, true);}
     jsonSummary.push(
-        {"Tiefstwert": Tiefstwert, "Hoechstwert": Hoechstwert, "Temp_Durchschnitt": Temp_Durchschnitt, "Max_Windboee": Max_Windboee, 
+        {"Tiefstwert": Tiefstwert, "Hoechstwert": Hoechstwert, "Temp_Durchschnitt": Temp_Durchschnitt, "Max_Windboee": Max_Windboee,
         "Max_Regenmenge": Max_Regenmenge, "Regenmenge_Monat": Regenmenge_Monat, "warme_Tage": warme_Tage,
-        "Sommertage": Sommertage, "heisse_Tage": heisse_Tage, "Frost_Tage": Frost_Tage, "kalte_Tage": kalte_Tage, "Eistage": Eistage, 
-        "sehr_kalte_Tage": sehr_kalte_Tage, "Wuestentage": Wuestentage, "Tropennaechte": Tropennaechte, "Regentage": Regentage})
+        "Sommertage": Sommertage, "heisse_Tage": heisse_Tage, "Frost_Tage": Frost_Tage, "kalte_Tage": kalte_Tage, "Eistage": Eistage,
+        "sehr_kalte_Tage": sehr_kalte_Tage, "Wuestentage": Wuestentage, "Tropennaechte": Tropennaechte, "Regentage": Regentage,
+        "Sonnenscheindauer_Monat": Sonnenscheindauer_Monat, "Solarenergie_Monat": Solarenergie_Monat})
     createState(PRE_DP+monatsdatenpunkt,'',{ name: "Monatsstatistik für "+monatsname[datum.getMonth()]+' '+datum.getFullYear(), type: "string", role: "json" }, () => { setState(PRE_DP+monatsdatenpunkt, JSON.stringify(jsonSummary), true); }); 
 
     /* Monatswerte resetten. DPs unabhängig ihres Wertes initial schreiben; wir nehmen die aktuelle Außentemperatur, da sie 
@@ -595,6 +638,8 @@ function speichern_Monat() {
     setState(PRE_DP+'.aktueller_Monat.Wuestentage', 0, true);
     setState(PRE_DP+'.aktueller_Monat.Tropennaechte', 0, true);
     setState(PRE_DP+'.aktueller_Monat.Regentage', 0, true);
+    setState(PRE_DP+'.aktueller_Monat.Sonnenscheindauer', 0, true);
+    setState(PRE_DP+'.aktueller_Monat.Solarenergie', 0, true);
 } //end function
 
 function VorJahr() {   
@@ -846,6 +891,10 @@ function Backup_Jahresstatistik() {
     let Wuestentage_Jahr = getState(PRE_DP + '.Jahreswerte.Gradtage_Wuestentage').val;
     let Tropennaechte_Jahr = getState(PRE_DP + '.Jahreswerte.Gradtage_Tropennaechte').val;
     let Regentage_Jahr = getState(PRE_DP + '.Jahreswerte.Regentage').val;
+    let Sonnenscheindauer_Jahr = getState(PRE_DP + '.Jahreswerte.Sonnenscheindauer').val;
+    let Solarenergie_Jahr = getState(PRE_DP + '.Jahreswerte.Solarenergie').val;
+    let Sonnenschein_Max_Tag = getState(PRE_DP + '.Jahreswerte.Sonnenschein_Max_Tag').val;
+    let Solarenergie_Max_Tag_Jahr = getState(PRE_DP + '.Jahreswerte.Solarenergie_Max_Tag').val;
     let jsonSummary = [];
 
    jsonSummary.push({
@@ -866,7 +915,11 @@ function Backup_Jahresstatistik() {
   "sehr kalte Tage": sehrkalte_Tage_Jahr,
   "Wuestentage": Wuestentage_Jahr,
   "Tropennaechte": Tropennaechte_Jahr,
-  "Regentage": Regentage_Jahr
+  "Regentage": Regentage_Jahr,
+  "Sonnenscheindauer": Sonnenscheindauer_Jahr,
+  "Solarenergie": Solarenergie_Jahr,
+  "Sonnenschein Max Tag": Sonnenschein_Max_Tag,
+  "Solarenergie Max Tag": Solarenergie_Max_Tag_Jahr
 });
 
     createState(PRE_DP+'.Jahreswerte.VorJahre.'+(new Date().getFullYear()-1), '', { name: "Jahresstatistik", type: "string", role: "json" }, () => { setState(PRE_DP+'.Jahreswerte.VorJahre.'+(new Date().getFullYear()-1), JSON.stringify(jsonSummary), true) });
@@ -901,7 +954,17 @@ function Rekordwerte() {
     //Trockenperiode
     if (getState(PRE_DP+'.Rekordwerte.value.Trockenperiode').val <= Trockenperiode_akt) {
         setState(PRE_DP+'.Rekordwerte.value.Trockenperiode', Trockenperiode_akt, true, () => { Template_Rekordwerte('Trockenperiode','Rekordwerte.Trockenperiode'); });
-    }  
+    }
+
+    //Sonnenschein (längster Tag)
+    if (getState(PRE_DP+'.Rekordwerte.value.Sonnenschein_Max_Tag').val <= Sonnenschein_VorTag) {
+        setState(PRE_DP+'.Rekordwerte.value.Sonnenschein_Max_Tag', Sonnenschein_VorTag, true, () => { Template_Rekordwerte('Sonnenschein_Max_Tag','Rekordwerte.Sonnenschein_Max_Tag'); });
+    }
+
+    //Solarenergie (ertragreichster Tag)
+    if (getState(PRE_DP+'.Rekordwerte.value.Solarenergie_Max_Tag').val <= Solarenergie_VorTag) {
+        setState(PRE_DP+'.Rekordwerte.value.Solarenergie_Max_Tag', Solarenergie_VorTag, true, () => { Template_Rekordwerte('Solarenergie_Max_Tag','Rekordwerte.Solarenergie_Max_Tag'); });
+    }
 
 } // end function
 
@@ -969,6 +1032,8 @@ async function createDP(DP_Check) {
     createState(PRE_DP + '.aktueller_Monat.Wuestentage',          0,    { name: "Tage mit einer Hochsttemperatur größer/gleich 35°", type: "number", role: "state", unit: "Tage" });
     createState(PRE_DP + '.aktueller_Monat.Tropennaechte',        0,    { name: "Tage mit einer Mindesttemperatur über/gleich 20°", type: "number", role: "state", unit: "Tage" });
     await createStateAsync(PRE_DP + '.aktueller_Monat.Regentage', 0,    { name: "Regentage im Monat",                              type: "number", role: "state", unit: "Tage" });
+    createState(PRE_DP+'.aktueller_Monat.Sonnenscheindauer',      0,    { name: "Sonnenscheindauer im Monat",                      type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.aktueller_Monat.Solarenergie',           0,    { name: "Solarenergie im Monat",                           type: "number", role: "state", unit: "Wh/m²" });
 
     createState(PRE_DP+'.Vorjahres_Monat.Tiefstwert',             99999, { name: "niedrigste Temperatur",                       type: "number", role: "state", unit: "°C" });
     createState(PRE_DP+'.Vorjahres_Monat.Hoechstwert',            99999, { name: "höchste Temperatur",                          type: "number", role: "state", unit: "°C" });
@@ -986,12 +1051,16 @@ async function createDP(DP_Check) {
     createState(PRE_DP + '.Vorjahres_Monat.Wuestentage',          99999, { name: "Tage mit einer Hochsttemperatur größer/gleich 35°", type: "number", role: "state", unit: "Tage" });
     createState(PRE_DP + '.Vorjahres_Monat.Tropennaechte',        99999, { name: "Tage mit einer Mindesttemperatur über/gleich 20°", type: "number", role: "state", unit: "Tage" });
     await createStateAsync(PRE_DP + '.Vorjahres_Monat.Regentage', 99999, { name: "Regentage im Monat",                          type: "number", role: "state", unit: "Tage" });
+    createState(PRE_DP+'.Vorjahres_Monat.Sonnenscheindauer_Monat',99999, { name: "Sonnenscheindauer im Vorjahresmonat",          type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Vorjahres_Monat.Solarenergie_Monat',    99999, { name: "Solarenergie im Vorjahresmonat",               type: "number", role: "state", unit: "Wh/m²" });
 
     createState(PRE_DP+'.VorTag.Temperatur_Tiefstwert',           99999, { name: "niedrigste Tagestemperatur",                  type: "number", role: "state", unit: "°C" });
     createState(PRE_DP+'.VorTag.Temperatur_Hoechstwert',          99999, { name: "höchste Tagestemperatur",                     type: "number", role: "state", unit: "°C" });
     createState(PRE_DP+'.VorTag.Temperatur_Durchschnitt',         99999, { name: "Durchschnittstemperatur",                     type: "number", role: "state", unit: "°C" });
     createState(PRE_DP+'.VorTag.Regenmenge',                      0,     { name: "Regenmenge vom Vortag",                       type: "number", role: "state", unit: "l/m²" });
     createState(PRE_DP+'.VorTag.Windboee_max',                    0,     { name: "stärkste Windböe vom Vortag",                 type: "number", role: "state", unit: "km/h" });
+    createState(PRE_DP+'.VorTag.Sonnenscheindauer',               0,     { name: "Sonnenscheindauer vom Vortag",                type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.VorTag.Solarenergie',                    0,     { name: "Solarenergie vom Vortag",                    type: "number", role: "state", unit: "Wh/m²" });
 
     createState(PRE_DP+'.Jahreswerte.Temperatur_Hoechstwert',     -100,  { name: "höchste Tagestemperatur des Jahres",          type: "number", role: "state", unit: "°C" });
     createState(PRE_DP+'.Jahreswerte.Temperatur_Tiefstwert',      100,   { name: "niedrigste Tagestemperatur des Jahres",       type: "number", role: "state", unit: "°C" });
@@ -1011,6 +1080,12 @@ async function createDP(DP_Check) {
     createState(PRE_DP + '.Jahreswerte.Gradtage_Wuestentage',     0,     { name: "Tage mit einer Hochsttemperatur größer/gleich 35°", type: "number", role: "state", unit: "Tage" });
     createState(PRE_DP + '.Jahreswerte.Gradtage_Tropennaechte',   0,     { name: "Tage mit einer Mindesttemperatur über/gleich 20°", type: "number", role: "state", unit: "Tage" });
     await createStateAsync(PRE_DP + '.Jahreswerte.Regentage',     0,     { name: "Regentage im Jahr",                           type: "number", role: "state", unit: "Tage" });
+    createState(PRE_DP+'.Jahreswerte.Sonnenscheindauer',          0,     { name: "Sonnenscheindauer des Jahres",                type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Jahreswerte.Solarenergie',               0,     { name: "Solarenergie des Jahres",                    type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Jahreswerte.Sonnenschein_Max_Tag',       0,     { name: "längster Sonnentag des Jahres",               type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Jahreswerte.Solarenergie_Max_Tag',       0,     { name: "ertragreichster Solartag des Jahres",         type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Jahreswerte.Sonnenschein_Max_Monat',     0,     { name: "sonnigster Monat des Jahres (Sekunden)",      type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Jahreswerte.Solarenergie_Max_Monat',     0,     { name: "ertragreichster Monat des Jahres",            type: "number", role: "state", unit: "Wh/m²" });
 
     createState(PRE_DP+'.Rekordwerte.value.Temp_Max',             -100,  { name: "Max. Tagestemperatur",                        type: "number", role: "state", unit: "°C" });
     createState(PRE_DP+'.Rekordwerte.value.Temp_Min',             100,   { name: "Min. Tagestemperatur",                        type: "number", role: "state", unit: "°C" });
@@ -1028,6 +1103,10 @@ async function createDP(DP_Check) {
     createState(PRE_DP+'.Rekordwerte.Regenmengemonat',           '',     { name: "höchste je gemessene Regenmenge eines Monats",type: "string", role: "state" });
     createState(PRE_DP+'.Rekordwerte.Windboee',                  '',     { name: "stärkste je gemessene Windböe"               ,type: "string", role: "state" });
     createState(PRE_DP+'.Rekordwerte.Trockenperiode',            '',     { name: "längste je andauernde Trockenperiode",        type: "string", role: "state" });
+    createState(PRE_DP+'.Rekordwerte.value.Sonnenschein_Max_Tag',0,     { name: "längster je gemessener Sonnentag",            type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Rekordwerte.value.Solarenergie_Max_Tag',0,     { name: "ertragreichster je gemessener Solartag",      type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Rekordwerte.Sonnenschein_Max_Tag',      '',     { name: "längster je gemessener Sonnentag",            type: "string", role: "state" });
+    createState(PRE_DP+'.Rekordwerte.Solarenergie_Max_Tag',      '',     { name: "ertragreichster je gemessener Solartag",      type: "string", role: "state" });
 
     createState(PRE_DP+'.Control.Statusmeldung',                  '',    { name: "Statusmeldungen",                             type: "string", role: "state"});
     createState(PRE_DP+'.Control.Reset_Jahresstatistik',          false, { name: "Jahresstatistik zurücksetzen",                type: "boolean",role: "state"});
