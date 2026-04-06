@@ -114,6 +114,27 @@
 const DP_Check ='aktueller_Monat.Regentage';
 if (!existsState(PRE_DP+'.'+DP_Check)) { createDP(DP_Check); }
 
+// Neue DPs ab V2.1.0 (Sonnenschein + Solarenergie) nachträglich anlegen falls noch nicht vorhanden
+if (!existsState(PRE_DP+'.VorTag.Sonnenscheindauer')) {
+    createState(PRE_DP+'.VorTag.Sonnenscheindauer',               0,     { name: "Sonnenscheindauer vom Vortag",                type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.VorTag.Solarenergie',                    0,     { name: "Solarenergie vom Vortag",                    type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.aktueller_Monat.Sonnenscheindauer',      0,     { name: "Sonnenscheindauer im Monat",                  type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.aktueller_Monat.Solarenergie',           0,     { name: "Solarenergie im Monat",                       type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Vorjahres_Monat.Sonnenscheindauer_Monat',99999, { name: "Sonnenscheindauer im Vorjahresmonat",          type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Vorjahres_Monat.Solarenergie_Monat',    99999, { name: "Solarenergie im Vorjahresmonat",               type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Jahreswerte.Sonnenscheindauer',          0,     { name: "Sonnenscheindauer des Jahres",                type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Jahreswerte.Solarenergie',               0,     { name: "Solarenergie des Jahres",                    type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Jahreswerte.Sonnenschein_Max_Tag',       0,     { name: "längster Sonnentag des Jahres",               type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Jahreswerte.Solarenergie_Max_Tag',       0,     { name: "ertragreichster Solartag des Jahres",         type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Jahreswerte.Sonnenschein_Max_Monat',     0,     { name: "sonnigster Monat des Jahres (Sekunden)",      type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Jahreswerte.Solarenergie_Max_Monat',     0,     { name: "ertragreichster Monat des Jahres",            type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Rekordwerte.value.Sonnenschein_Max_Tag', 0,     { name: "längster je gemessener Sonnentag",            type: "number", role: "state", unit: "s" });
+    createState(PRE_DP+'.Rekordwerte.value.Solarenergie_Max_Tag', 0,     { name: "ertragreichster je gemessener Solartag",      type: "number", role: "state", unit: "Wh/m²" });
+    createState(PRE_DP+'.Rekordwerte.Sonnenschein_Max_Tag',       '',    { name: "längster je gemessener Sonnentag",            type: "string", role: "state" });
+    createState(PRE_DP+'.Rekordwerte.Solarenergie_Max_Tag',       '',    { name: "ertragreichster je gemessener Solartag",      type: "string", role: "state" });
+    console.log('V2.1.0: Neue Datenpunkte für Sonnenschein/Solarenergie angelegt.');
+}
+
 //Start des Scripts
     const ScriptVersion = "V2.1.0";
     const dayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
