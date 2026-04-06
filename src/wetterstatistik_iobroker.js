@@ -868,24 +868,26 @@ function Statusmeldung(Text) {
     setState(PRE_DP+'.Control.Statusmeldung', Text, true);
 }
 
-// Test auf neue Skriptversion
+// Test auf neue Skriptversion (prüft GitHub Releases via API)
 function check_update() {
-    const link="https://github.com/SBorg2014/WLAN-Wetterstation/commits/master/wetterstation-statistik.js";
+    const apiUrl = "https://api.github.com/repos/ludda78/weatherstats_iobroker/releases/latest";
+    const repoUrl = "https://github.com/ludda78/weatherstats_iobroker/releases/latest";
 
     try {
-        httpGet(link, { responseType: 'text' }, (error, response) => { 
+        httpGet(apiUrl, { responseType: 'text', headers: { 'User-Agent': 'ioBroker-weatherstats' } }, (error, response) => {
             if (!error && response.statusCode == 200) {
-               let regex = /">V.*<\/a>/
-               , version = response.data.match(regex);
-               if (version[0].match(ScriptVersion)) { 
-                 setState(PRE_DP+'.Control.ScriptVersion_Update','---',true); 
-               } else {
-                 setState(PRE_DP+'.Control.ScriptVersion_Update','https://github.com/SBorg2014/WLAN-Wetterstation/blob/master/wetterstation-statistik.js',true);
-                 console.log('neue Script-Version verfügbar...');
-               }
-            } else { 
-                log(error, 'error'); 
-            } 
+                let release = JSON.parse(response.data);
+                let latestTag = release.tag_name.replace(/^v/i, '').toUpperCase(); // z.B. "v2.1.0" -> "V2.1.0"
+                let currentVersion = ScriptVersion.toUpperCase();                  // z.B. "V2.1.0"
+                if (latestTag === currentVersion) {
+                    setState(PRE_DP+'.Control.ScriptVersion_Update', '---', true);
+                } else {
+                    setState(PRE_DP+'.Control.ScriptVersion_Update', repoUrl, true);
+                    console.log('Neue Script-Version verfügbar: ' + release.tag_name + ' (aktuell: ' + ScriptVersion + ')');
+                }
+            } else {
+                log('check_update Fehler: ' + (error || response.statusCode), 'error');
+            }
         });
     } catch (fehler) {
         log("Fehler (try): " + fehler, "error");
