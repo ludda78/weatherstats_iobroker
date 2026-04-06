@@ -21,6 +21,8 @@
 
 
         by ludda78
+    v2.1.1 - 06.04.2026 ~Fix: Neue DPs bei bestehender Installation automatisch nachanlegen
+                        ~Update-Check auf eigenes Repo umgestellt (GitHub Releases API)
     v2.1.0 - 05.04.2026 +Sonnenscheindauer und Solarenergie (VorTag, Monat, Jahr, Rekord)
                         ~Fix Rekordwert-Datum: -86400 → -86400000 (ms statt s)
                         ~Fix VorJahr: Eistag-Bedingung korrigiert (Höchstwert < 0°C)
@@ -136,7 +138,7 @@ if (!existsState(PRE_DP+'.VorTag.Sonnenscheindauer')) {
 }
 
 //Start des Scripts
-    const ScriptVersion = "V2.1.0";
+    const ScriptVersion = "V2.1.1";
     const dayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     let Tiefstwert, Hoechstwert, Temp_Durchschnitt, Max_Windboee, Max_Regenmenge, Regenmenge_Monat, warme_Tage, Sommertage;
     let heisse_Tage, Frost_Tage, kalte_Tage, Eistage, sehr_kalte_Tage, Wuestentage, Tropennaechte, Trockenperiode_akt;
