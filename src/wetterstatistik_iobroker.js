@@ -21,6 +21,7 @@
 
 
         by ludda78
+    v2.2.0 - 04.05.2026 +Aktuelle Trockenperiode als eigener Datenpunkt (Info.Trockenperiode_aktuell)
     v2.1.1 - 06.04.2026 ~Fix: Neue DPs bei bestehender Installation automatisch nachanlegen
                         ~Update-Check auf eigenes Repo umgestellt (GitHub Releases API)
     v2.1.0 - 05.04.2026 +Sonnenscheindauer und Solarenergie (VorTag, Monat, Jahr, Rekord)
@@ -116,6 +117,12 @@
 const DP_Check ='aktueller_Monat.Regentage';
 if (!existsState(PRE_DP+'.'+DP_Check)) { createDP(DP_Check); }
 
+// Neuer DP ab V2.2.0 (aktuelle Trockenperiode) nachträglich anlegen falls noch nicht vorhanden
+if (!existsState(PRE_DP+'.Info.Trockenperiode_aktuell')) {
+    createState(PRE_DP+'.Info.Trockenperiode_aktuell', 0, { name: "aktuelle Trockenperiode (Tage seit letztem Regen)", type: "number", role: "state", unit: "Tage" });
+    console.log('V2.2.0: Neuer Datenpunkt Info.Trockenperiode_aktuell angelegt.');
+}
+
 // Neue DPs ab V2.1.0 (Sonnenschein + Solarenergie) nachträglich anlegen falls noch nicht vorhanden
 if (!existsState(PRE_DP+'.VorTag.Sonnenscheindauer')) {
     createState(PRE_DP+'.VorTag.Sonnenscheindauer',               0,     { name: "Sonnenscheindauer vom Vortag",                type: "number", role: "state", unit: "s" });
@@ -138,7 +145,7 @@ if (!existsState(PRE_DP+'.VorTag.Sonnenscheindauer')) {
 }
 
 //Start des Scripts
-    const ScriptVersion = "V2.1.1";
+    const ScriptVersion = "V2.2.0";
     const dayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     let Tiefstwert, Hoechstwert, Temp_Durchschnitt, Max_Windboee, Max_Regenmenge, Regenmenge_Monat, warme_Tage, Sommertage;
     let heisse_Tage, Frost_Tage, kalte_Tage, Eistage, sehr_kalte_Tage, Wuestentage, Tropennaechte, Trockenperiode_akt;
@@ -530,6 +537,7 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
                 setState(PRE_DP + '.Jahreswerte.Trockenperiode', Trockenperiode_akt, true);
             }
     }
+    setState(PRE_DP + '.Info.Trockenperiode_aktuell', Trockenperiode_akt, true);
    }
    //Rekordwerte 
     Rekordwerte();
@@ -876,7 +884,7 @@ function check_update() {
     const repoUrl = "https://github.com/ludda78/weatherstats_iobroker/releases/latest";
 
     try {
-        httpGet(apiUrl, { responseType: 'text', headers: { 'User-Agent': 'ioBroker-weatherstats' } }, (error, response) => {
+        httpGet(apiUrl, { responseType: 'text' }, (error, response) => {
             if (!error && response.statusCode == 200) {
                 let release = JSON.parse(response.data);
                 let latestTag = release.tag_name.replace(/^v/i, '').toUpperCase(); // z.B. "v2.1.0" -> "V2.1.0"
@@ -1091,6 +1099,7 @@ async function createDP(DP_Check) {
     createState(PRE_DP+'.Jahreswerte.Temperatur_Tiefstwert',      100,   { name: "niedrigste Tagestemperatur des Jahres",       type: "number", role: "state", unit: "°C" });
     createState(PRE_DP+'.Jahreswerte.Temperatur_Durchschnitt',    0,     { name: "Durchschnittstemperatur des Jahres",          type: "number", role: "state", unit: "°C" });
     createState(PRE_DP+'.Jahreswerte.Trockenperiode',             0,     { name: "längste Periode ohne Regen",                  type: "number", role: "state", unit: "Tage" });
+    createState(PRE_DP+'.Info.Trockenperiode_aktuell',            0,     { name: "aktuelle Trockenperiode (Tage seit letztem Regen)", type: "number", role: "state", unit: "Tage" });
     createState(PRE_DP+'.Jahreswerte.Regenmengetag',              0,     { name: "höchste Regenmenge an einem Tag",             type: "number", role: "state", unit: "l/m²" });
     createState(PRE_DP+'.Jahreswerte.Regenmengemonat',            0,     { name: "höchste Regenmenge innerhalb eines Monats",   type: "number", role: "state", unit: "l/m²" });
     createState(PRE_DP + '.Jahreswerte.Regenmenge',          0,     { name: "Regenmenge des Jahres",                       type: "number", role: "state", unit: "l/m²" });
