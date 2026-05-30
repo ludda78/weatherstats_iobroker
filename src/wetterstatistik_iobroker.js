@@ -488,8 +488,9 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
        if (getState(PRE_DP+'.Jahreswerte.Windboee_max').val <= Max_Windboee) {setState(PRE_DP+'.Jahreswerte.Windboee_max', Max_Windboee, true);} 
 																											   
        // Trockenperiode
-        // Aktuelles Datum erhalten
+        // Referenzdatum = Vortag (Skript verarbeitet immer gestrige Daten)
          let currentDate = new Date();
+         currentDate.setDate(currentDate.getDate() - 1);
 		
          let letzterRegenStr = getState(WET_DP_BROKER + '.Info.Letzter_Regen').val;
          let letzterRegenDatum = null;
