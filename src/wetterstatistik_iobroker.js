@@ -520,16 +520,20 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
         console.log('[Trockenperiode] currentDate: ' + currentDate);
 
     if (letzterRegenDatum !== null) {
-        Trockenperiode_akt = dayOfYear(currentDate) - dayOfYear(letzterRegenDatum);
-      
-        console.log('[Trockenperiode] dayOfYear(currentDate): ' + dayOfYear(currentDate));
-        console.log('[Trockenperiode] dayOfYear(letzterRegenDatum): ' + dayOfYear(letzterRegenDatum));
-        console.log('[Trockenperiode] Berechnete Trockenperiode: ' + Trockenperiode_akt);
-
+        if (letzterRegenDatum > currentDate) {
+            // Regen fiel nach dem Referenzdatum (z.B. kurz vor Skriptlauf um 1:03 Uhr)
+            Trockenperiode_akt = 0;
+        } else {
+            Trockenperiode_akt = dayOfYear(currentDate) - dayOfYear(letzterRegenDatum);
             if (Trockenperiode_akt < 0) {
+                // Jahreswechsel: letzter Regen war im Vorjahr
                 let daysInLastYear = dayOfYear(new Date(currentDate.getFullYear() - 1, 11, 31));
                 Trockenperiode_akt += daysInLastYear;
             }
+        }
+        console.log('[Trockenperiode] dayOfYear(currentDate): ' + dayOfYear(currentDate));
+        console.log('[Trockenperiode] dayOfYear(letzterRegenDatum): ' + dayOfYear(letzterRegenDatum));
+        console.log('[Trockenperiode] Berechnete Trockenperiode: ' + Trockenperiode_akt);
             let Trockenperiode_alt = getState(PRE_DP + '.Jahreswerte.Trockenperiode').val;
             console.log('[Trockenperiode] Alter Wert: ' + Trockenperiode_alt);
 
