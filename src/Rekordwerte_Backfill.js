@@ -7,6 +7,9 @@
 //    - Windboee                (stärkste je gemessene Windböe)
 //    - Regenmengemonat         (höchste je gemessene Regenmenge eines Monats)
 //
+//  Überschreibt nur, wenn der InfluxDB-Wert besser als der aktuelle ioBroker-Wert ist.
+//  Keine Zugangsdaten nötig – sendTo nutzt die Verbindung des InfluxDB-Adapters.
+//
 //  Nach dem Ausführen Script deaktivieren!
 // ============================================================
 
@@ -100,40 +103,26 @@ sendTo('influxdb.' + INFLUXDB_INSTANZ, 'query', QUERY, function(result) {
     const windVal     = v(3); const windTs     = t(3);
     const regenMonVal = v(4); const regenMonTs = t(4);
 
-    if (tempMaxVal !== null) {
-        const str = formatTag(round2(tempMaxVal), tempMaxTs, '°C');
-        setState(PRE_DP + '.Rekordwerte.value.Temp_Max', round2(tempMaxVal), true);
-        setState(PRE_DP + '.Rekordwerte.Temperatur_Spitzenhoechstwert', str, true);
-        console.log('[Backfill] Temp_Max: ' + str);
+    function update(dpValue, dpString, influxVal, influxTs, unit, isMax, formatFn) {
+        if (influxVal === null) return;
+        const current = getState(PRE_DP + '.Rekordwerte.value.' + dpValue).val;
+        const isBetter = isMax ? (influxVal > current) : (influxVal < current);
+        const val = round2(influxVal);
+        const str = formatFn(val, influxTs, unit);
+        if (isBetter) {
+            setState(PRE_DP + '.Rekordwerte.value.' + dpValue, val, true);
+            setState(PRE_DP + '.Rekordwerte.' + dpString, str, true);
+            console.log('[Backfill] NEU ' + dpValue + ': ' + str + ' (bisher: ' + current + ')');
+        } else {
+            console.log('[Backfill] KEIN UPDATE ' + dpValue + ': InfluxDB=' + val + ', ioBroker=' + current + ' → kein neuer Rekord');
+        }
     }
 
-    if (tempMinVal !== null) {
-        const str = formatTag(round2(tempMinVal), tempMinTs, '°C');
-        setState(PRE_DP + '.Rekordwerte.value.Temp_Min', round2(tempMinVal), true);
-        setState(PRE_DP + '.Rekordwerte.Temperatur_Spitzentiefstwert', str, true);
-        console.log('[Backfill] Temp_Min: ' + str);
-    }
-
-    if (regenTagVal !== null) {
-        const str = formatTag(round2(regenTagVal), regenTagTs, 'l/m²');
-        setState(PRE_DP + '.Rekordwerte.value.Regenmengetag', round2(regenTagVal), true);
-        setState(PRE_DP + '.Rekordwerte.Regenmengetag', str, true);
-        console.log('[Backfill] Regenmengetag: ' + str);
-    }
-
-    if (windVal !== null) {
-        const str = formatTag(round2(windVal), windTs, 'km/h');
-        setState(PRE_DP + '.Rekordwerte.value.Windboee', round2(windVal), true);
-        setState(PRE_DP + '.Rekordwerte.Windboee', str, true);
-        console.log('[Backfill] Windboee: ' + str);
-    }
-
-    if (regenMonVal !== null) {
-        const str = formatMonat(round2(regenMonVal), regenMonTs, 'l/m²');
-        setState(PRE_DP + '.Rekordwerte.value.Regenmengemonat', round2(regenMonVal), true);
-        setState(PRE_DP + '.Rekordwerte.Regenmengemonat', str, true);
-        console.log('[Backfill] Regenmengemonat: ' + str);
-    }
+    update('Temp_Max',        'Temperatur_Spitzenhoechstwert', tempMaxVal,  tempMaxTs,  '°C',   true,  formatTag);
+    update('Temp_Min',        'Temperatur_Spitzentiefstwert',  tempMinVal,  tempMinTs,  '°C',   false, formatTag);
+    update('Regenmengetag',   'Regenmengetag',                 regenTagVal, regenTagTs, 'l/m²', true,  formatTag);
+    update('Windboee',        'Windboee',                      windVal,     windTs,     'km/h', true,  formatTag);
+    update('Regenmengemonat', 'Regenmengemonat',               regenMonVal, regenMonTs, 'l/m²', true,  formatMonat);
 
     console.log('[Backfill] Abgeschlossen. Script jetzt deaktivieren!');
 });
