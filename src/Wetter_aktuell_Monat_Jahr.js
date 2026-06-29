@@ -49,6 +49,10 @@ const YEAR_TEMPLATE = {
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Durchschnitt': 'Temperatur_Durchschnitt',
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Hoechstwert': 'Temperatur_Max',
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Tiefstwert': 'Temperatur_Min',
+    '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Min_Max': 'Temperatur_Min_Max',
+    '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Max_Min': 'Temperatur_Max_Min',
+    '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Durchschnitt_Tag_Max': 'Temperatur_Durchschnitt_Tag_Max',
+    '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Durchschnitt_Tag_Min': 'Temperatur_Durchschnitt_Tag_Min',
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Trockenperiode':'Trockenperiode_Jahr',
     '0_userdata.0.Statistik.Wetter.Info.Trockenperiode_aktuell':'Trockenperiode_Aktuell',
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Windboee_max': 'Windboee_Max'
