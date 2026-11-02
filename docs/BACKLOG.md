@@ -39,8 +39,8 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
   - Sonst sauber (1 Punkt/Tag).
   - `wetterstatistik_2026`: nur **September** 3× (geschrieben 01.10.), Oktober sauber.
 - **Aufräum-Script:** `src/Duplikate_Aufraeumen.js` (DRY_RUN zuerst) — löscht 29.09.–25.10. jeweils 01:06–01:59
-  in beiden `*_running` sowie 01.10. 01:49–02:30 in `wetterstatistik_2026`. Status: DRY_RUN 02.11.2026 ok
-  (55 Fenster × 2 = 110 Punkte), echter Lauf freigegeben.
+  in beiden `*_running` sowie 01.10. 01:49–02:30 in `wetterstatistik_2026`. Status: **erledigt 02.11.2026 22:44**
+  (55 Fenster × 2 = 110 Punkte gelöscht).
 - Offen: 12.01./27.01. — erst Werte beider Punkte ansehen, dann entscheiden.
 
 ```flux
@@ -78,6 +78,7 @@ from(bucket: "iobroker")
 ### [Bug] Update-Check meldet ältere Version als „neu“
 - `check_update()` vergleicht nur auf Gleichheit: Release `v2.1.1` ≠ `V2.3.1` → „Neue Script-Version verfügbar“.
 - Fix: Versionen numerisch vergleichen, oder aktuelles Release auf GitHub anlegen.
+- Entschärft 02.11.2026: Release `v2.3.1` angelegt → Meldung verschwindet. Grundproblem (Gleichheitsvergleich) bleibt.
 
 ### [Doku] `writeMonthlyStats2InfluxDB_v2.js` / `monthlyStatsCreateApply_V1.js` absichern
 - Wenn `Data.JJJJ.MM` fehlt, legt `monthlyStatsCreateApply_V1` die DPs mit 0 an und der Writer schreibt
@@ -90,3 +91,5 @@ from(bucket: "iobroker")
 
 - **02.11.2026** – influxdb-Adapter 5.x: Multi-Query-Fehler in `weatherStats` behoben (V2.3.1), Ausfall 25.10.–01.11. nachgeholt,
   `influxWrite()`-Rückgabewert behoben → siehe [Stoerung_2026-10.md](Stoerung_2026-10.md) (Commit `8cff760`)
+- **02.11.2026** – Influx-Duplikate 29.09.–25.10. (110 Punkte) mit `Duplikate_Aufraeumen.js` gelöscht
+- **02.11.2026** – GitHub-Release [v2.3.1](https://github.com/ludda78/weatherstats_iobroker/releases/tag/v2.3.1) angelegt
