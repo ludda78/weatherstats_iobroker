@@ -12,6 +12,27 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
 - To do: in InfluxDB unter *Load Data → API Tokens* den alten Token löschen.
 - Historie umschreiben (Force-Push) ist optional — nach dem Widerruf ist der Token wertlos.
 
+### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **gemeinsam ausarbeiten**
+Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen; Influx-Duplikate
+liefen ~5 Wochen, Regentage-Bug ggf. noch länger. Ideen (noch nicht entschieden):
+
+1. **Sofort-Alarm bei Fehlern im Log:** `onLog('error', ...)` in einem Watchdog-Script, gefiltert auf die
+   Wetter-Scripte und `influxdb.0` → Push-Nachricht.
+2. **Morgen-Check (z. B. 07:00):** prüft, ob die Nacht gelaufen ist, und meldet sonst:
+   - `VorTag.Temperatur_Durchschnitt` heute aktualisiert (`ts`)?
+   - `Control.Statusmeldung` = „erfolgreich“?
+   - genau 1 Punkt heute in `weather_monthly_running` / `weather_yearly_running` (erkennt auch Duplikate)
+   - am Monatsersten: `Data.JJJJ.MM` des Vormonats vorhanden, `Data.JJJJ.<Monat>.*` ≠ 0, genau 1 Punkt in `wetterstatistik_<Jahr>`
+3. **Plausibilitätsprüfungen** (z. B. monatlich):
+   - Regentage ≤ Anzahl Tage mit `Regen_Tag >= 0.1` in den Rohdaten (hätte den Regentage-Bug gezeigt)
+   - Sonnenscheindauer/Solarenergie Monat > 0 im Sommerhalbjahr (hätte den Sonnenschein-Punkt gezeigt)
+   - Tiefstwert ≤ Durchschnitt ≤ Höchstwert, Werte in plausiblen Grenzen
+4. **Nach Adapter-Updates** (influxdb, javascript): Hinweis/Extra-Check am nächsten Morgen.
+5. Optional: `Control.Letzter_Erfolg` (Zeitstempel) in `weatherStats` setzen → einfach im VIS/Dashboard anzeigbar.
+
+Offene Fragen: Benachrichtigungskanal (Telegram, Pushover, E-Mail, …? welcher Adapter ist installiert),
+Umfang (erst 1+2, dann 3?), eigenes Script `Wetter_Watchdog.js` vs. Erweiterung von `weatherStats`.
+
 ### [Bug] Regentage werden an Tagen ohne Regen-Messpunkte falsch gezählt — **als Nächstes**
 - `Regentage` ist eine Script-globale Variable (`wetterstatistik_iobroker.js`, `let Regentage`).
 - In `main()` wird sie nur gesetzt, wenn Influx für den Tag `Regen_Tag`-Punkte liefert (`regen.length > 0`).
