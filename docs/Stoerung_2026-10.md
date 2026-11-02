@@ -57,6 +57,23 @@ Zwei voneinander unabhängige Fehler, die zufällig zeitgleich auffielen:
 
 **Oktober 2026:** Ø 11,34 °C · Min 1 °C · Max 23,78 °C · Regen 58,43 mm an 19 Tagen · Böe max. 34,92 km/h
 
+## Auswirkung auf die Statistik (Mittelwerte etc.)
+
+**Die Statistik selbst ist nicht verfälscht.**
+
+- `weatherStats` rechnet nur aus den **Rohdaten** `wetterstation` (`Aussentemperatur`, `Wind_max`, `Regen_Tag`).
+  Die schreibt der influxdb-Adapter, nicht `global_influx.js` → nie doppelt.
+- Monats-/Jahresdurchschnitt werden als laufende Werte in ioBroker-DPs fortgeschrieben, nicht aus Influx zurückgelesen.
+- Die Duplikate lagen nur in den **Ausgabe**-Messreihen `weather_monthly_running`, `weather_yearly_running`,
+  `wetterstatistik_2026` — reine Kopien der Ergebnisse, die kein Script wieder einliest.
+- Verfälscht waren nur eigene Abfragen auf diese Messreihen (Grafana/Data Explorer):
+  `last()` unkritisch (gleiche Werte); `count()`/`sum()` über Zeit falsch; `mean()` verzerrt, sobald der Zeitraum
+  Tage mit 1 und 3 Punkten mischt (29.09.–25.10. dreifach gewichtet). Seit 02.11.2026 bereinigt.
+- Der Ausfall 25.10.–01.11. wurde mit derselben Rechenlogik aus den Rohdaten nachgeholt →
+  Monats-/Jahresdurchschnitt entsprechen dem Wert ohne Ausfall.
+
+Unabhängig davon kann der Regentage-Bug (siehe Backlog) die Regentage zu hoch zählen.
+
 ## Nicht wiederherstellbar
 
 - Sonnenschein/Solarenergie der Ausfalltage (nur als VorTag-DP im Broker vorhanden) — war aber ohnehin 0, siehe Backlog.

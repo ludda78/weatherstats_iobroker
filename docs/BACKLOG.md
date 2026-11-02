@@ -12,7 +12,7 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
 - To do: in InfluxDB unter *Load Data → API Tokens* den alten Token löschen.
 - Historie umschreiben (Force-Push) ist optional — nach dem Widerruf ist der Token wertlos.
 
-### [Bug] Regentage werden an Tagen ohne Regen-Messpunkte falsch gezählt
+### [Bug] Regentage werden an Tagen ohne Regen-Messpunkte falsch gezählt — **als Nächstes**
 - `Regentage` ist eine Script-globale Variable (`wetterstatistik_iobroker.js`, `let Regentage`).
 - In `main()` wird sie nur gesetzt, wenn Influx für den Tag `Regen_Tag`-Punkte liefert (`regen.length > 0`).
 - Liefert Influx keine Punkte, behält die Variable ihren alten Wert — nach dem Hochzählen ist das die
