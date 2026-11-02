@@ -29,16 +29,30 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
   - `weather_monthly_running` / `weather_yearly_running`: je 3 Punkte pro Tag (01:05, 01:15, 01:25)
     von der Umstellung bis 25.10.2026 (ab 26.10. bereits bereinigt durch `Ausfall_Nachholen.js`).
   - `wetterstatistik_<Jahr>`: je 3 Punkte für jeden Monatsersten nach der Umstellung (01:48, 01:58, 02:08).
-- Werte der Duplikate sind identisch → stört `last()`, nicht aber `mean()`/`count()`/`sum()` über Zeit.
-- To do: Umstellungsdatum ermitteln (Abfrage siehe unten), dann Aufräum-Script (nur Punkt um 01:05 bzw. 01:48 behalten).
+- Werte der Duplikate sind identisch → verfälschen `mean()`/`count()`/`sum()` über Zeit (nicht aber `last()`).
+- Befund 02.11.2026 (Abfragen unten):
+  - `weather_monthly_running`: **3 Punkte/Tag ab 29.09.2026 01:05** (erstes Tagesfenster mit count 3 endet 29.09. 00:00 UTC)
+    → Umstellung auf `global_influx.js` am 28.09.2026. Betroffen 29.09.–25.10. (ab 26.10. bereinigt).
+  - `weather_monthly_running`: **2 Punkte am 12.01. und 27.01.2026** → Einzelfälle, andere Ursache (Writer 2× gelaufen?).
+    Der scheinbare „2er-Verlauf“ Jan–März im ersten Diagramm war ein UTC-Artefakt (Tagesfenster in UTC,
+    Writer schreibt 01:05 Ortszeit; z. B. Zeitumstellung 29.03.) — mit `option location = Europe/Berlin` verschwunden.
+  - Sonst sauber (1 Punkt/Tag).
+  - `wetterstatistik_2026`: nur **September** 3× (geschrieben 01.10.), Oktober sauber.
+- **Aufräum-Script:** `src/Duplikate_Aufraeumen.js` (DRY_RUN zuerst) — löscht 29.09.–25.10. jeweils 01:06–01:59
+  in beiden `*_running` sowie 01.10. 01:49–02:30 in `wetterstatistik_2026`. Status: erstellt, noch nicht ausgeführt.
+- Offen: 12.01./27.01. — erst Werte beider Punkte ansehen, dann entscheiden.
 
 ```flux
-// Data Explorer → Script Editor: Anzahl Punkte pro Tag; erster Tag mit 3 = Umstellung
+// Punkte pro deutschem Kalendertag (Zeitstempel = Fensterende, also 00:00 des Folgetags)
+import "timezone"
+option location = timezone.location(name: "Europe/Berlin")
+
 from(bucket: "iobroker")
   |> range(start: 2026-01-01T00:00:00Z)
   |> filter(fn: (r) => r._measurement == "weather_monthly_running" and r._field == "Temperatur_Durchschnitt")
   |> aggregateWindow(every: 1d, fn: count, createEmpty: false)
   |> filter(fn: (r) => r._value > 1)
+  |> keep(columns: ["_time", "_value"])
 ```
 
 ```flux

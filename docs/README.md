@@ -74,6 +74,7 @@ Am 01.01. wird der Jahresdurchschnitt korrekt mit dem ersten Tageswert initialis
 | `src/monthlyStatsCreateApply_V1.js` | normal | am 1. um 01:05 | JSON `Data.JJJJ.MM` in Einzel-DPs `Data.JJJJ.<Monatsname>.*` übertragen |
 | `src/writeMonthlyStats2InfluxDB_v2.js` | normal | am 1. um 01:48 | Vormonatswerte nach `wetterstatistik_<Jahr>` |
 | `src/Ausfall_Nachholen.js` | einmalig | – | ausgefallene Tagesläufe nachholen (inkl. Influx-Korrektur), erst mit `DRY_RUN = true` |
+| `src/Duplikate_Aufraeumen.js` | einmalig | – | 3-fache Influx-Punkte (29.09.–25.10.2026) löschen, erst mit `DRY_RUN = true` |
 | `src/Temp_Extremwerte_Backfill.js`, `src/Rekordwerte_Backfill.js` | einmalig | – | historische Backfills |
 
 Die drei Influx-Writer benötigen das globale Skript. Der Token gehört nur in die lokale Kopie auf dem ioBroker, **nie ins Repo**.
