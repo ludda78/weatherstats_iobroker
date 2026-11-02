@@ -21,6 +21,8 @@
 
 
         by ludda78
+    v2.3.1 - 02.11.2026 ~Fix: Kompatibilität mit influxdb-Adapter 5.x (Multi-Query wird jetzt einzeln abgesetzt,
+                        Fehler "invalid statement: ," -> keine Tagesauswertung seit Adapter-Update)
     v2.3.0 - 29.06.2026 +Tagestemperatur-Extremwerte: höchster Tiefstwert (warmste Nacht), niedrigster Höchstwert,
                         +höchster und niedrigster Tagesdurchschnitt — jeweils als Jahreswert und Rekordwert
     v2.2.0 - 04.05.2026 +Aktuelle Trockenperiode als eigener Datenpunkt (Info.Trockenperiode_aktuell)
@@ -164,7 +166,7 @@ if (!existsState(PRE_DP+'.VorTag.Sonnenscheindauer')) {
 }
 
 //Start des Scripts
-    const ScriptVersion = "V2.3.0";
+    const ScriptVersion = "V2.3.1";
     const dayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     let Tiefstwert, Hoechstwert, Temp_Durchschnitt, Max_Windboee, Max_Regenmenge, Regenmenge_Monat, warme_Tage, Sommertage;
     let heisse_Tage, Frost_Tage, kalte_Tage, Eistage, sehr_kalte_Tage, Wuestentage, Tropennaechte, Trockenperiode_akt;
@@ -274,7 +276,7 @@ function main() {
  }//End Jobs Monatserster
 
   //InfluxDB abfragen (Regen +1min Startverzögerung wg. ev. Ungenauigkeit der Systemzeit des Wetterstation-Displays)
-sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query', 
+influxMultiQuery(
     //'from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '.Aussentemperatur") |> filter(fn: (r) => r._field == "value"); from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '.Wind_max") |> filter(fn: (r) => r._field == "value"); from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+((start+72000)/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '.Regen_Tag") |> filter(fn: (r) => r._field == "value")'
     'from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '") |> filter(fn: (r) => r._field == "Aussentemperatur"); from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '") |> filter(fn: (r) => r._field == "Wind_max"); from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+((start+72000)/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '") |> filter(fn: (r) => r._field == "Regen_Tag")'
     , function (result) {
@@ -586,6 +588,33 @@ sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query',
 
 } //end function main
 
+
+// Mehrere Flux-Abfragen (durch ';' getrennt) einzeln an den InfluxDB-Adapter senden und
+// das Ergebnis im gewohnten Format { result: [[...], [...], ...] } zurückgeben.
+// Hintergrund: influxdb-Adapter 5.x splittet zwar an ';', übergibt das Array dann aber als
+// String (mit ',' verbunden) an Influx -> "compilation failed: invalid statement: ,"
+function influxMultiQuery(queriesString, callback) {
+    const queries = queriesString.split(';').map(q => q.trim()).filter(q => q.length);
+    const results = new Array(queries.length);
+    let offen = queries.length, fehler = null;
+
+    queries.forEach((query, idx) => {
+        sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query', query, function (res) {
+            if (res.error) {
+                fehler = fehler || res.error;
+            } else {
+                // Adapter liefert bei Einzelabfrage [[rows]] (oder [rows] bei älteren Versionen)
+                let rows = res.result || [];
+                results[idx] = (rows.length && Array.isArray(rows[0])) ? rows[0] : rows;
+            }
+            if (--offen === 0) {
+                if (fehler) { callback({ result: [], error: fehler }); }
+                else { callback({ result: results }); }
+            }
+        });
+    });
+}
+
 function Reset_Jahresstatistik() {
         setState(PRE_DP + '.Jahreswerte.Temperatur_Tiefstwert',           100,  true);
         setState(PRE_DP + '.Jahreswerte.Temperatur_Hoechstwert',          -100, true);
@@ -770,7 +799,7 @@ function VorJahr() {
         end = new Date(zeitstempel.getFullYear()-1,zeitstempel.getMonth()+1,0,23,59,59); // Tag 0 des Folgemonats = letzter Tag des Vorjahresmonats (Schaltjahr-sicher)
         end = end.getTime(); 
             
-             sendTo('influxdb.'+INFLUXDB_INSTANZ, 'query', 
+             influxMultiQuery(
             //'from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '.Aussentemperatur") |> filter(fn: (r) => r._field == "value"); from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '.Wind_max") |> filter(fn: (r) => r._field == "value"); from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '.Regen_Tag") |> filter(fn: (r) => r._field == "value")'
             'from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '") |> filter(fn: (r) => r._field == "Aussentemperatur"); from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+(start/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '") |> filter(fn: (r) => r._field == "Wind_max"); from(bucket: "'+INFLUXDB_BUCKET+'") |> range(start: '+((start+72000)/1000)+', stop: '+(end/1000)+') |> filter(fn: (r) => r._measurement == "' + WET_DP + '") |> filter(fn: (r) => r._field == "Regen_Tag")'
                 , function (result) {

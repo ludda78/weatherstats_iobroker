@@ -57,10 +57,26 @@ Am 01.01. wird der Jahresdurchschnitt korrekt mit dem ersten Tageswert initialis
 
 ## Installation
 
-1. Skript aus `src/wetterstation-statistik.js` kopieren
+1. Skript aus `src/wetterstatistik_iobroker.js` kopieren
 2. In ioBroker JavaScript-Adapter einfügen
 3. Konfigurationsbereich am Skriptanfang anpassen
 4. Skript aktivieren
+
+---
+
+## Skripte
+
+| Datei | Typ | Zeitplan | Aufgabe |
+|------|-----|----------|---------|
+| `src/wetterstatistik_iobroker.js` | normal | täglich 01:03 | Tages-/Monats-/Jahres-/Rekordwerte aus InfluxDB berechnen, am Monatsersten `Data.JJJJ.MM` speichern |
+| `src/global_influx.js` | **global** | – | `influxWrite()` (gibt `true`/`false` zurück) und Logger-Helfer; `INFLUX_TOKEN` lokal eintragen |
+| `src/Wetter_aktuell_Monat_Jahr.js` | normal | täglich 01:05 | laufende Monats-/Jahreswerte nach `weather_monthly_running` / `weather_yearly_running` |
+| `src/monthlyStatsCreateApply_V1.js` | normal | am 1. um 01:05 | JSON `Data.JJJJ.MM` in Einzel-DPs `Data.JJJJ.<Monatsname>.*` übertragen |
+| `src/writeMonthlyStats2InfluxDB_v2.js` | normal | am 1. um 01:48 | Vormonatswerte nach `wetterstatistik_<Jahr>` |
+| `src/Ausfall_Nachholen.js` | einmalig | – | ausgefallene Tagesläufe nachholen (inkl. Influx-Korrektur), erst mit `DRY_RUN = true` |
+| `src/Temp_Extremwerte_Backfill.js`, `src/Rekordwerte_Backfill.js` | einmalig | – | historische Backfills |
+
+Die drei Influx-Writer benötigen das globale Skript. Der Token gehört nur in die lokale Kopie auf dem ioBroker, **nie ins Repo**.
 
 ---
 

@@ -1,17 +1,10 @@
-// Daily Weather Statistics Writer
+// Daily Weather Statistics Writer – v0.3 über global/influx
 // Writes monthly + yearly running values once per day at 01:05
-
-const axios = require('axios').default;
-
-const influxDbInstance = 'influxdb.0';
-const token = 'N-aPZgG2tvrEaIjdOrVvU8Efo66UDYcQQ6S_Dqh-2VAIMsJLjXDJvKHa0TBJa0nIiI2-EYmfpPm3WSBgIyq89w==';
+// Benötigt das globale Script mit influxWrite() (muss true/false zurückgeben!)
 
 const MEASUREMENT_MONTH = 'weather_monthly_running';
 const MEASUREMENT_YEAR  = 'weather_yearly_running';
-
-// ==========================
-// Templates
-// ==========================
+const RETRY_MIN = 10;   // Wiederholung nach 10 Min, max. 3 Versuche
 
 const MONTH_TEMPLATE = {
     '0_userdata.0.Statistik.Wetter.aktueller_Monat.Eistage': 'Eistage',
@@ -53,64 +46,42 @@ const YEAR_TEMPLATE = {
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Max_Min': 'Temperatur_Max_Min',
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Durchschnitt_Tag_Max': 'Temperatur_Durchschnitt_Tag_Max',
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Temperatur_Durchschnitt_Tag_Min': 'Temperatur_Durchschnitt_Tag_Min',
-    '0_userdata.0.Statistik.Wetter.Jahreswerte.Trockenperiode':'Trockenperiode_Jahr',
-    '0_userdata.0.Statistik.Wetter.Info.Trockenperiode_aktuell':'Trockenperiode_Aktuell',
+    '0_userdata.0.Statistik.Wetter.Jahreswerte.Trockenperiode': 'Trockenperiode_Jahr',
+    '0_userdata.0.Statistik.Wetter.Info.Trockenperiode_aktuell': 'Trockenperiode_Aktuell',
     '0_userdata.0.Statistik.Wetter.Jahreswerte.Windboee_max': 'Windboee_Max'
 };
 
-// ==========================
-// Helper
-// ==========================
-
 async function buildLine(measurement, template) {
     const fields = [];
-
     for (const [id, field] of Object.entries(template)) {
         const state = await getStateAsync(id);
-        if (state && !isNaN(state.val)) {
-            fields.push(`${field}=${state.val}`);
-        }
+        if (!state || state.val === null || state.val === '') continue;
+        const v = Number(state.val);
+        if (Number.isFinite(v)) fields.push(`${field}=${v}`);
     }
-
-    if (!fields.length) return null;
-    return `${measurement} ${fields.join(',')}`;
+    return fields.length ? `${measurement} ${fields.join(',')}` : null;
 }
 
-// ==========================
-// Main Writer
-// ==========================
-
-async function writeMonthlyAndYearlyStats() {
-    const cfg = await getObjectAsync(`system.adapter.${influxDbInstance}`);
-
-    const url = `${cfg.native.protocol}://${cfg.native.host}:${cfg.native.port}/api/v2/write`;
-    const params = `?bucket=${cfg.native.dbname}&org=${cfg.native.organization}`;
-
-    const lines = [];
-
-    const monthLine = await buildLine(MEASUREMENT_MONTH, MONTH_TEMPLATE);
-    if (monthLine) lines.push(monthLine);
-
-    const yearLine = await buildLine(MEASUREMENT_YEAR, YEAR_TEMPLATE);
-    if (yearLine) lines.push(yearLine);
+async function writeMonthlyAndYearlyStats(attempt = 1) {
+    const lines = [
+        await buildLine(MEASUREMENT_MONTH, MONTH_TEMPLATE),
+        await buildLine(MEASUREMENT_YEAR, YEAR_TEMPLATE),
+    ].filter(Boolean);
 
     if (!lines.length) {
         console.warn('No weather statistics to write.');
         return;
     }
 
-    await axios.post(url + params, lines.join('\n'), {
-        headers: {
-            'Content-Type': 'text/plain',
-            'Authorization': `Token ${token}`
-        }
-    });
-
-    console.log('Daily weather statistics written:', lines.join(' | '));
+    const ok = await influxWrite(lines.join('\n'), 'weather_stats');
+    if (ok) {
+        console.log('Daily weather statistics written:', lines.join(' | '));
+    } else if (attempt < 3) {
+        console.warn(`Weather statistics: Versuch ${attempt} fehlgeschlagen, neuer Versuch in ${RETRY_MIN} Min`);
+        setTimeout(() => writeMonthlyAndYearlyStats(attempt + 1), RETRY_MIN * 60 * 1000);
+    } else {
+        console.error('Weather statistics: nach 3 Versuchen nicht geschrieben');
+    }
 }
 
-// ==========================
-// Schedule
-// ==========================
-
-schedule('5 1 * * *', writeMonthlyAndYearlyStats);
+schedule('5 1 * * *', () => writeMonthlyAndYearlyStats());
