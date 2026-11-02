@@ -6,7 +6,7 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
 
 ## Offen
 
-### [Sicherheit] Alten InfluxDB-Token widerrufen — **dringend**
+### [Sicherheit] Alten InfluxDB-Token widerrufen — **dringend, vorgemerkt für 03.11.2026 morgens**
 - Token `N-aPZgG2…` stand in `src/Wetter_aktuell_Monat_Jahr.js` (Commit `d2dbaa0`, 01.06.2026) und ist im öffentlichen GitHub-Repo in der Historie sichtbar.
 - Aktuell genutzter Token auf dem PI ist ein anderer (`w_nWg…`), war nie im Repo.
 - To do: in InfluxDB unter *Load Data → API Tokens* den alten Token löschen.
@@ -39,7 +39,8 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
   - Sonst sauber (1 Punkt/Tag).
   - `wetterstatistik_2026`: nur **September** 3× (geschrieben 01.10.), Oktober sauber.
 - **Aufräum-Script:** `src/Duplikate_Aufraeumen.js` (DRY_RUN zuerst) — löscht 29.09.–25.10. jeweils 01:06–01:59
-  in beiden `*_running` sowie 01.10. 01:49–02:30 in `wetterstatistik_2026`. Status: erstellt, noch nicht ausgeführt.
+  in beiden `*_running` sowie 01.10. 01:49–02:30 in `wetterstatistik_2026`. Status: DRY_RUN 02.11.2026 ok
+  (55 Fenster × 2 = 110 Punkte), echter Lauf freigegeben.
 - Offen: 12.01./27.01. — erst Werte beider Punkte ansehen, dann entscheiden.
 
 ```flux

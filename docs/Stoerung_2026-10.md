@@ -63,10 +63,17 @@ Zwei voneinander unabhängige Fehler, die zufällig zeitgleich auffielen:
 - Jahres-Trockenperiode im Ausfallzeitraum (aktuelle Trockenperiode wird beim nächsten Lauf korrekt gesetzt).
 - `RegenmengeJahr` / `Trockenperiode_*` in den nachgeschriebenen `weather_yearly_running`-Punkten.
 
-## Kontrolle am 03.11.2026
+## To do am 03.11.2026 (morgens)
 
+- [ ] **Alten InfluxDB-Token `N-aPZgG2…` löschen** (InfluxDB → *Load Data → API Tokens*) — steht in der öffentlichen Git-Historie
 - [ ] 01:03 `weatherStats_neu`: `TagesTemp_Durchschnitt (zeitgewichtet)`, `tag_des_jahres=306`, kein Influx-Fehler
 - [ ] 01:05 `Wetter_aktuell_Monat_Jahr`: genau einmal `Daily weather statistics written`
+- [ ] Werte 12.01./27.01.2026 in `weather_*_running` ansehen (Duplikate, siehe Backlog)
+
+## Duplikate bereinigt (02.11.2026, ca. 22:45)
+
+- `Duplikate_Aufraeumen.js`: DRY_RUN ergab in allen 55 Fenstern genau 2 Punkte (110 gesamt), dann gelöscht.
+- Betroffen: `weather_monthly_running` / `weather_yearly_running` 29.09.–25.10. (01:15 + 01:25), `wetterstatistik_2026` September (01.10. 01:58 + 02:08).
 
 ## Offene Folgepunkte
 
