@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.3.1] – 2026-11-02
+### Fixed
+- Kompatibilität mit influxdb-Adapter 5.x: Multi-Query wird einzeln abgesetzt (`influxMultiQuery()`),
+  vorher Fehler `invalid statement: ,` und keine Tagesauswertung → [Störung Oktober 2026](Stoerung_2026-10.md)
+- `global_influx.js`: `influxWrite()` gibt `true`/`false` zurück (vorher Fehlalarm + 3-fache Writes)
+
+### Added
+- `Ausfall_Nachholen.js`: ausgefallene Tagesläufe nachholen inkl. Influx-Korrektur
+- Influx-Hilfsscripte ins Repo aufgenommen: `global_influx.js`, `monthlyStatsCreateApply_V1.js`, `writeMonthlyStats2InfluxDB_v2.js`
+
+### Security
+- Hartkodierten Token aus `Wetter_aktuell_Monat_Jahr.js` entfernt (alter Token muss in InfluxDB widerrufen werden)
+
+---
+
+## [2.3.0] – 2026-06-29
+- Tagestemperatur-Extremwerte (warmste Nacht, niedrigster Höchstwert, höchster/niedrigster Tagesdurchschnitt) als Jahres- und Rekordwert
+
+## [2.2.0] – 2026-05-04
+- Aktuelle Trockenperiode als eigener Datenpunkt (`Info.Trockenperiode_aktuell`)
+
+## [2.1.x] – 2026-04
+- Sonnenscheindauer und Solarenergie, diverse Fixes (Details im Script-Kopf)
+
+---
+
 ## [2.0.7] – 2026-01-05
 ### Changed
 - Tagesdurchschnitt jetzt zeitgewichtet (Influx-Timestamps)

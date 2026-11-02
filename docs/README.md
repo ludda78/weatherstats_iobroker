@@ -80,6 +80,15 @@ Die drei Influx-Writer benötigen das globale Skript. Der Token gehört nur in d
 
 ---
 
+## Dokumentation
+
+- [CHANGELOG.md](CHANGELOG.md) – Versionen
+- [BACKLOG.md](BACKLOG.md) – offene Punkte, Bugs, Ideen
+- [Berechnungslogik.md](Berechnungslogik.md) – wie die Werte berechnet werden
+- [Stoerung_2026-10.md](Stoerung_2026-10.md) – Ausfall Okt. 2026 (influxdb-Adapter 5.x), Ursache und Wiederherstellung
+
+---
+
 ## Lizenz
 
 MIT License
