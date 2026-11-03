@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- Update-Check: `v` wird jetzt bei Release-Tag **und** Script-Version entfernt. Vorher wurde `2.3.1` mit `V2.3.1`
+  verglichen → „Neue Script-Version verfügbar“ bei jeder Version (gesehen am 03.11.2026).
+
 ## [2.3.1] – 2026-11-02
 ### Fixed
 - Kompatibilität mit influxdb-Adapter 5.x: Multi-Query wird einzeln abgesetzt (`influxMultiQuery()`),

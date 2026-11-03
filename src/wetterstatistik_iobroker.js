@@ -948,8 +948,8 @@ function check_update() {
         httpGet(apiUrl, { responseType: 'text' }, (error, response) => {
             if (!error && response.statusCode == 200) {
                 let release = JSON.parse(response.data);
-                let latestTag = release.tag_name.replace(/^v/i, '').toUpperCase(); // z.B. "v2.1.0" -> "V2.1.0"
-                let currentVersion = ScriptVersion.toUpperCase();                  // z.B. "V2.1.0"
+                let latestTag = release.tag_name.replace(/^v/i, '');               // z.B. "v2.1.0" -> "2.1.0"
+                let currentVersion = ScriptVersion.replace(/^v/i, '');             // z.B. "V2.1.0" -> "2.1.0"
                 if (latestTag === currentVersion) {
                     setState(PRE_DP+'.Control.ScriptVersion_Update', '---', true);
                 } else {
