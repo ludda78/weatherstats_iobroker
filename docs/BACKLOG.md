@@ -6,6 +6,26 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
 
 ## Offen
 
+### [Sicherheit] Token-Inventur InfluxDB
+Stand 03.11.2026 (InfluxDB → *Load Data → API Tokens*):
+
+| Token | angelegt | vermutete Nutzung | Status |
+|---|---|---|---|
+| for weatherdata of station | 25.06.2023 | unklar — evtl. Altlast (Station schrieb früher direkt?) | **prüfen** |
+| Martin's Token | 03.06.2023 | vermutlich Admin/All-Access (CLI?) | prüfen, ob noch nötig |
+| token to read data from Influx for Grafana and iobroker | 16.01.2026 | Grafana + ioBroker lesen | in Nutzung |
+| token for influx adapter in iobroker | 28.09.2026 | influxdb-Adapter + `global_influx.js` (`w_nWg…`) | in Nutzung |
+| evcc / evcc reading only | 01.11.2026 | evcc | in Nutzung |
+
+Vorgehen je fraglichem Token:
+1. Wert ermitteln: `influx auth list` auf dem PI (falls CLI eingerichtet).
+2. Auf dem PI suchen: `sudo grep -rIl "<erste 10–15 Zeichen>" /opt/iobroker/iobroker-data/ /etc/telegraf/ /etc/grafana/ /etc/evcc* ~/`
+   + Grafana *Connections → Data sources* prüfen (Token dort ggf. verschlüsselt gespeichert).
+3. Nichts gefunden → in der UI auf **inaktiv** setzen, ein paar Tage beobachten, dann löschen.
+   Etwas fällt aus → wieder aktivieren, Fundstelle notieren.
+
+Hinweis: Der veröffentlichte Token `N-aPZgG2…` ist bereits ungültig (401) und taucht in dieser Liste nicht mehr auf.
+
 ### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **gemeinsam ausarbeiten**
 Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen; Influx-Duplikate
 liefen ~5 Wochen, Regentage-Bug ggf. noch länger. Ideen (noch nicht entschieden):
