@@ -11,11 +11,14 @@ Stand 03.11.2026 (InfluxDB → *Load Data → API Tokens*):
 
 | Token | angelegt | vermutete Nutzung | Status |
 |---|---|---|---|
-| for weatherdata of station | 25.06.2023 | unklar — **Kandidat für veröffentlichten `N-aPZgG2…`**, falls inaktiv | **Status prüfen** |
-| Martin's Token | 03.06.2023 | vermutlich **Operator-Token** aus `influx setup` (Wert im Passwort-Manager); **aktiv** → nicht der veröffentlichte | behalten, nie in Scripte |
-| token to read data from Influx for Grafana and iobroker | 16.01.2026 | Grafana + ioBroker lesen | in Nutzung |
-| token for influx adapter in iobroker | 28.09.2026 | influxdb-Adapter + `global_influx.js` (`w_nWg…`) | in Nutzung |
-| evcc / evcc reading only | 01.11.2026 | evcc | in Nutzung |
+| for weatherdata of station | 25.06.2023 | **= veröffentlichter `N-aPZgG2…`** (war in Writer + CLI-Konfig) | **inaktiv → löschen** |
+| Martin's Token | 03.06.2023 | **Operator-Token** aus `influx setup` (Wert im Passwort-Manager), jetzt in der CLI | aktiv, behalten, nie in Scripte |
+| token to read data from Influx for Grafana and iobroker | 16.01.2026 | Grafana + ioBroker lesen | aktiv |
+| write data from iobroker scripts to influxDB | ? | vermutlich `global_influx.js` (`w_nWg…`) | aktiv |
+| token for influx adapter in iobroker | 28.09.2026 | influxdb-Adapter | aktiv |
+| evcc / evcc reading only | 01.11.2026 | evcc | aktiv |
+
+Stand `influx auth list` 03.11.2026: einziger inaktiver Token ist „for weatherdata of station“.
 
 Vorgehen je fraglichem Token:
 1. Wert ermitteln: `influx auth list` auf dem PI (falls CLI eingerichtet).
