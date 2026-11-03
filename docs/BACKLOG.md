@@ -6,12 +6,6 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
 
 ## Offen
 
-### [Sicherheit] Alten InfluxDB-Token widerrufen — **dringend, vorgemerkt für 03.11.2026 morgens**
-- Token `N-aPZgG2…` stand in `src/Wetter_aktuell_Monat_Jahr.js` (Commit `d2dbaa0`, 01.06.2026) und ist im öffentlichen GitHub-Repo in der Historie sichtbar.
-- Aktuell genutzter Token auf dem PI ist ein anderer (`w_nWg…`), war nie im Repo.
-- To do: in InfluxDB unter *Load Data → API Tokens* den alten Token löschen.
-- Historie umschreiben (Force-Push) ist optional — nach dem Widerruf ist der Token wertlos.
-
 ### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **gemeinsam ausarbeiten**
 Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen; Influx-Duplikate
 liefen ~5 Wochen, Regentage-Bug ggf. noch länger. Ideen (noch nicht entschieden):
@@ -116,4 +110,6 @@ from(bucket: "iobroker")
 - **02.11.2026** – GitHub-Release [v2.3.1](https://github.com/ludda78/weatherstats_iobroker/releases/tag/v2.3.1) angelegt
 - **03.11.2026** – Nachtlauf geprüft: weatherStats V2.3.1 ohne Influx-Fehler (tag_des_jahres=306, Jahres-Ø 12,04),
   Writer 01:05 genau 1× geschrieben
+- **03.11.2026** – Alter InfluxDB-Token `N-aPZgG2…` (öffentlich in Commit `d2dbaa0`) geprüft: API liefert **401**
+  → bereits ungültig, kein Handlungsbedarf
 - **03.11.2026** – Update-Check-Fehler behoben (`v`-Präfix nur einseitig entfernt)
