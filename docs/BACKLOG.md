@@ -148,5 +148,5 @@ from(bucket: "iobroker")
 - **03.11.2026** – Nachtlauf geprüft: weatherStats V2.3.1 ohne Influx-Fehler (tag_des_jahres=306, Jahres-Ø 12,04),
   Writer 01:05 genau 1× geschrieben
 - **03.11.2026** – Alter InfluxDB-Token `N-aPZgG2…` (öffentlich in Commit `d2dbaa0`) geprüft: API liefert **401**
-  → bereits ungültig, kein Handlungsbedarf
+  → derzeit nicht nutzbar. Vermutlich = „Martin's Token“ (inaktiv) → ersetzen + löschen, siehe Token-Inventur
 - **03.11.2026** – Update-Check-Fehler behoben (`v`-Präfix nur einseitig entfernt)
