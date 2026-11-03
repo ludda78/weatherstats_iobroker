@@ -28,6 +28,8 @@ Hinweis: Der veröffentlichte Token `N-aPZgG2…` ist bereits ungültig (401) un
 
 Befund 03.11.2026: `influx auth list` auf dem PI → `401 Unauthorized`. `~/.influxdbv2/configs` enthält
 `token = "N-aPZgG2tv…"` → **die CLI nutzte den veröffentlichten Token**.
+**Bestätigt 03.11.2026:** CLI-Token und Repo-Token sind identisch (beide 88 Zeichen, Vergleich „GLEICH“),
+API-Antwort **401** → veröffentlichter Token ist ungültig, **keine Gefahr**.
 Vermutung „= Martin's Token“ **widerlegt**: Martin's Token ist laut UI **aktiv** (ein aktiver Token liefert 200, nicht 401).
 → Der veröffentlichte Token ist entweder ein **inaktiver** Token der Liste (Kandidat: „for weatherdata of station“)
 oder wurde **gelöscht**. Token-Werte sind in InfluxDB 2 nicht änderbar.
