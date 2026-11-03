@@ -6,51 +6,41 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
 
 ## Offen
 
-### [Sicherheit] Token-Inventur InfluxDB
-Stand 03.11.2026 (InfluxDB → *Load Data → API Tokens*):
+### [Sicherheit] Veröffentlichter InfluxDB-Token „for weatherdata of station“ — **beobachten, dann löschen**
 
-| Token | angelegt | vermutete Nutzung | Status |
+**Sachverhalt (Stand 03.11.2026):**
+- Token `N-aPZgG2…` = „**for weatherdata of station**“ (angelegt 25.06.2023).
+- Stand von **01.06.2026 bis 02.11.2026** im öffentlichen GitHub-Repo (Commit `d2dbaa0`, `Wetter_aktuell_Monat_Jahr.js`)
+  und war in dieser Zeit **aktiv**. Bleibt in der Git-Historie sichtbar.
+- Außerdem war er der Token der `influx`-CLI (`~/.influxdbv2/configs`).
+- **03.11.2026 vom User deaktiviert** → seitdem API-Antwort 401. CLI auf Operator-Token umgestellt.
+- Korrektur: Eine frühere Notiz („war schon ungültig, keine Gefahr“) war falsch. Der 401 kam von der Deaktivierung am selben Tag.
+
+**To do:**
+1. Rechte des Tokens prüfen: `influx auth list | grep "for weatherdata"` (letzte Spalte).
+2. War InfluxDB (Port 8086) aus dem Internet erreichbar (Portfreigabe, Reverse-Proxy, DynDNS …)?
+   - nein → Token war praktisch nicht nutzbar, Risiko vernachlässigbar.
+   - ja → Daten im Zeitraum 01.06.–03.11. auf ungewöhnliche Writes/Deletes prüfen.
+3. 1–2 Tage inaktiv lassen und beobachten (laufen Wetterdaten, Grafana, evcc, ioBroker weiter?) → dann **löschen**.
+
+### [Sicherheit] Token-Inventur InfluxDB
+Stand `influx auth list` 03.11.2026:
+
+| Token | angelegt | Nutzung | Status |
 |---|---|---|---|
-| for weatherdata of station | 25.06.2023 | **= veröffentlichter `N-aPZgG2…`** (war in Writer + CLI-Konfig) | **inaktiv → löschen** |
+| for weatherdata of station | 25.06.2023 | **veröffentlichter `N-aPZgG2…`**, war in Writer + CLI-Konfig | **inaktiv seit 03.11.** → löschen nach Beobachtung |
 | Martin's Token | 03.06.2023 | **Operator-Token** aus `influx setup` (Wert im Passwort-Manager), jetzt in der CLI | aktiv, behalten, nie in Scripte |
 | token to read data from Influx for Grafana and iobroker | 16.01.2026 | Grafana + ioBroker lesen | aktiv |
 | write data from iobroker scripts to influxDB | ? | vermutlich `global_influx.js` (`w_nWg…`) | aktiv |
 | token for influx adapter in iobroker | 28.09.2026 | influxdb-Adapter | aktiv |
 | evcc / evcc reading only | 01.11.2026 | evcc | aktiv |
 
-Stand `influx auth list` 03.11.2026: einziger inaktiver Token ist „for weatherdata of station“.
-
-Vorgehen je fraglichem Token:
-1. Wert ermitteln: `influx auth list` auf dem PI (falls CLI eingerichtet).
-2. Auf dem PI suchen: `sudo grep -rIl "<erste 10–15 Zeichen>" /opt/iobroker/iobroker-data/ /etc/telegraf/ /etc/grafana/ /etc/evcc* ~/`
-   + Grafana *Connections → Data sources* prüfen (Token dort ggf. verschlüsselt gespeichert).
-3. Nichts gefunden → in der UI auf **inaktiv** setzen, ein paar Tage beobachten, dann löschen.
-   Etwas fällt aus → wieder aktivieren, Fundstelle notieren.
-
-Hinweis: Der veröffentlichte Token `N-aPZgG2…` ist bereits ungültig (401) und taucht in dieser Liste nicht mehr auf.
-
-Befund 03.11.2026: `influx auth list` auf dem PI → `401 Unauthorized`. `~/.influxdbv2/configs` enthält
-`token = "N-aPZgG2tv…"` → **die CLI nutzte den veröffentlichten Token**.
-**Bestätigt 03.11.2026:** CLI-Token und Repo-Token sind identisch (beide 88 Zeichen, Vergleich „GLEICH“),
-API-Antwort **401** → veröffentlichter Token ist ungültig, **keine Gefahr**.
-Vermutung „= Martin's Token“ **widerlegt**: Martin's Token ist laut UI **aktiv** (ein aktiver Token liefert 200, nicht 401).
-→ Der veröffentlichte Token ist entweder ein **inaktiver** Token der Liste (Kandidat: „for weatherdata of station“)
-oder wurde **gelöscht**. Token-Werte sind in InfluxDB 2 nicht änderbar.
-
-03.11.2026: Token aus dem Passwort-Manager getestet → gültig, Berechtigungen instanzweit (`read:/authorizations`,
-`write:/users`, … ohne `orgs/<ID>/`) → **Operator-Token**. Für die CLI eingetragen (`influx config set -n local`),
-damit funktionieren wieder `influx auth list` und `influx backup`.
-
-To do:
-1. Übersicht ohne Token-Werte: `influx auth list --json | grep -E '"(description|status)"'` —
-   ist einer inaktiv, ist er der veröffentlichte → löschen (nicht reaktivieren).
-2. ~~CLI reparieren~~ erledigt 03.11.2026 (Operator-Token aus Passwort-Manager).
-3. Danach die Inventur fortsetzen.
-- Zum Auflisten wird ein All-Access-Token benötigt (vermutlich „Martin's Token“): `influx auth list -t '<Token>'`,
-  danach CLI-Konfig aktualisieren: `influx config set -n <Name> -t <Token>`.
-- Kein All-Access-Token mehr vorhanden → Admin-Funktionen (Tokens/User anlegen) nicht möglich. Notfallzugang:
-  `influxd recovery auth create-operator` auf dem PI (InfluxDB vorher stoppen). Nur bei echtem Bedarf.
-- Für die Inventur selbst nicht zwingend nötig: Deaktivieren + Beobachten funktioniert ohne Token-Werte.
+Hilfreiche Befehle (CLI läuft mit dem Operator-Token):
+- Übersicht ohne Token-Werte: `influx auth list --json | grep -E '"(description|status)"'`
+- Fundstellen eines Tokens auf dem PI: `sudo grep -rIl "<erste 10–15 Zeichen>" /opt/iobroker/iobroker-data/ /etc/telegraf/ /etc/grafana/ /etc/evcc* ~/`
+  (+ Grafana *Connections → Data sources* prüfen, dort ggf. verschlüsselt).
+- Unklarer Token → inaktiv setzen, beobachten, dann löschen. Fällt etwas aus → wieder aktivieren, Fundstelle notieren.
+- Operator-Token verloren → Notfallzugang `influxd recovery auth create-operator` (InfluxDB vorher stoppen).
 
 ### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **gemeinsam ausarbeiten**
 Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen; Influx-Duplikate
@@ -156,6 +146,4 @@ from(bucket: "iobroker")
 - **02.11.2026** – GitHub-Release [v2.3.1](https://github.com/ludda78/weatherstats_iobroker/releases/tag/v2.3.1) angelegt
 - **03.11.2026** – Nachtlauf geprüft: weatherStats V2.3.1 ohne Influx-Fehler (tag_des_jahres=306, Jahres-Ø 12,04),
   Writer 01:05 genau 1× geschrieben
-- **03.11.2026** – Alter InfluxDB-Token `N-aPZgG2…` (öffentlich in Commit `d2dbaa0`) geprüft: API liefert **401**
-  → derzeit nicht nutzbar (inaktiv oder gelöscht; nicht „Martin's Token“, der ist aktiv), siehe Token-Inventur
 - **03.11.2026** – Update-Check-Fehler behoben (`v`-Präfix nur einseitig entfernt)
