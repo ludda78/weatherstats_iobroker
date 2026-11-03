@@ -136,4 +136,4 @@ from(bucket: "iobroker")
 - **03.11.2026** – Veröffentlichter InfluxDB-Token `N-aPZgG2…` (Commit `d2dbaa0`, öffentlich seit 01.06.2026): existiert
   in InfluxDB nicht mehr (`influx auth list` findet ihn nicht → gelöscht, Zeitpunkt unbekannt, vermutlich bei der
   Umstellung 28.09.). War noch in der `influx`-CLI-Konfig eingetragen → CLI auf Operator-Token umgestellt.
-- **03.11.2026** – Update-Check-Fehler behoben (`v`-Präfix nur einseitig entfernt)
+- **03.11.2026** – Update-Check-Fehler behoben (`v`-Präfix nur einseitig entfernt), auch auf dem PI eingespielt
