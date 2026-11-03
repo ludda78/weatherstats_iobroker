@@ -26,6 +26,14 @@ Vorgehen je fraglichem Token:
 
 Hinweis: Der veröffentlichte Token `N-aPZgG2…` ist bereits ungültig (401) und taucht in dieser Liste nicht mehr auf.
 
+Befund 03.11.2026: `influx auth list` auf dem PI → `401 Unauthorized` → die CLI-Konfiguration enthält einen
+ungültigen Token (evtl. der alte `N-aPZgG2…`, prüfen mit `influx config list`, nur Anfang ansehen).
+- Zum Auflisten wird ein All-Access-Token benötigt (vermutlich „Martin's Token“): `influx auth list -t '<Token>'`,
+  danach CLI-Konfig aktualisieren: `influx config set -n <Name> -t <Token>`.
+- Kein All-Access-Token mehr vorhanden → Admin-Funktionen (Tokens/User anlegen) nicht möglich. Notfallzugang:
+  `influxd recovery auth create-operator` auf dem PI (InfluxDB vorher stoppen). Nur bei echtem Bedarf.
+- Für die Inventur selbst nicht zwingend nötig: Deaktivieren + Beobachten funktioniert ohne Token-Werte.
+
 ### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **gemeinsam ausarbeiten**
 Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen; Influx-Duplikate
 liefen ~5 Wochen, Regentage-Bug ggf. noch länger. Ideen (noch nicht entschieden):
