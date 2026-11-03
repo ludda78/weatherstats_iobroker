@@ -12,7 +12,7 @@ Stand 03.11.2026 (InfluxDB → *Load Data → API Tokens*):
 | Token | angelegt | vermutete Nutzung | Status |
 |---|---|---|---|
 | for weatherdata of station | 25.06.2023 | unklar — **Kandidat für veröffentlichten `N-aPZgG2…`**, falls inaktiv | **Status prüfen** |
-| Martin's Token | 03.06.2023 | vermutlich Admin/All-Access aus `influx setup`; **aktiv** → nicht der veröffentlichte | behalten |
+| Martin's Token | 03.06.2023 | vermutlich **Operator-Token** aus `influx setup` (Wert im Passwort-Manager); **aktiv** → nicht der veröffentlichte | behalten, nie in Scripte |
 | token to read data from Influx for Grafana and iobroker | 16.01.2026 | Grafana + ioBroker lesen | in Nutzung |
 | token for influx adapter in iobroker | 28.09.2026 | influxdb-Adapter + `global_influx.js` (`w_nWg…`) | in Nutzung |
 | evcc / evcc reading only | 01.11.2026 | evcc | in Nutzung |
@@ -34,10 +34,14 @@ Vermutung „= Martin's Token“ **widerlegt**: Martin's Token ist laut UI **akt
 → Der veröffentlichte Token ist entweder ein **inaktiver** Token der Liste (Kandidat: „for weatherdata of station“)
 oder wurde **gelöscht**. Token-Werte sind in InfluxDB 2 nicht änderbar.
 
+03.11.2026: Token aus dem Passwort-Manager getestet → gültig, Berechtigungen instanzweit (`read:/authorizations`,
+`write:/users`, … ohne `orgs/<ID>/`) → **Operator-Token**. Für die CLI eingetragen (`influx config set -n local`),
+damit funktionieren wieder `influx auth list` und `influx backup`.
+
 To do:
-1. In der UI den Status aller Tokens prüfen — ist einer inaktiv, ist er der veröffentlichte → löschen (nicht reaktivieren).
-2. CLI reparieren: Wert von „Martin's Token“ (Passwort-Manager) oder neuen All-Access-Token erzeugen
-   (*Generate API Token → All Access*, sichern) → `influx config set -n local -t '<Token>'`, Test: `influx auth list`.
+1. Übersicht ohne Token-Werte: `influx auth list --json | grep -E '"(description|status)"'` —
+   ist einer inaktiv, ist er der veröffentlichte → löschen (nicht reaktivieren).
+2. ~~CLI reparieren~~ erledigt 03.11.2026 (Operator-Token aus Passwort-Manager).
 3. Danach die Inventur fortsetzen.
 - Zum Auflisten wird ein All-Access-Token benötigt (vermutlich „Martin's Token“): `influx auth list -t '<Token>'`,
   danach CLI-Konfig aktualisieren: `influx config set -n <Name> -t <Token>`.
