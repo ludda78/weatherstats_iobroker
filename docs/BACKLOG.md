@@ -11,8 +11,8 @@ Stand 03.11.2026 (InfluxDB → *Load Data → API Tokens*):
 
 | Token | angelegt | vermutete Nutzung | Status |
 |---|---|---|---|
-| for weatherdata of station | 25.06.2023 | unklar — evtl. Altlast (Station schrieb früher direkt?) | **prüfen** |
-| Martin's Token | 03.06.2023 | Admin/All-Access aus `influx setup`, CLI-Token — **= veröffentlichter `N-aPZgG2…`** (s. u.) | **ersetzen + löschen** |
+| for weatherdata of station | 25.06.2023 | unklar — **Kandidat für veröffentlichten `N-aPZgG2…`**, falls inaktiv | **Status prüfen** |
+| Martin's Token | 03.06.2023 | vermutlich Admin/All-Access aus `influx setup`; **aktiv** → nicht der veröffentlichte | behalten |
 | token to read data from Influx for Grafana and iobroker | 16.01.2026 | Grafana + ioBroker lesen | in Nutzung |
 | token for influx adapter in iobroker | 28.09.2026 | influxdb-Adapter + `global_influx.js` (`w_nWg…`) | in Nutzung |
 | evcc / evcc reading only | 01.11.2026 | evcc | in Nutzung |
@@ -27,16 +27,16 @@ Vorgehen je fraglichem Token:
 Hinweis: Der veröffentlichte Token `N-aPZgG2…` ist bereits ungültig (401) und taucht in dieser Liste nicht mehr auf.
 
 Befund 03.11.2026: `influx auth list` auf dem PI → `401 Unauthorized`. `~/.influxdbv2/configs` enthält
-`token = "N-aPZgG2tv…"` → **die CLI nutzte den veröffentlichten Token**. Da `influx setup` den Admin-Token
-„<User>'s Token“ anlegt und in die CLI-Konfig schreibt, ist der veröffentlichte Token sehr wahrscheinlich
-**„Martin's Token“ (All-Access)**. Er steht noch in der Liste, liefert aber 401 → vermutlich **inaktiv**, nicht gelöscht.
+`token = "N-aPZgG2tv…"` → **die CLI nutzte den veröffentlichten Token**.
+Vermutung „= Martin's Token“ **widerlegt**: Martin's Token ist laut UI **aktiv** (ein aktiver Token liefert 200, nicht 401).
+→ Der veröffentlichte Token ist entweder ein **inaktiver** Token der Liste (Kandidat: „for weatherdata of station“)
+oder wurde **gelöscht**. Token-Werte sind in InfluxDB 2 nicht änderbar.
 
 To do:
-1. In der UI prüfen, ob „Martin's Token“ inaktiv ist (bestätigt die Vermutung) — **nicht reaktivieren**.
-2. Neuen All-Access-Token in der UI erzeugen (*Generate API Token → All Access*), im Passwort-Manager sichern.
-3. CLI umstellen: `influx config set -n local -t '<neuer Token>'`, Test: `influx auth list`.
-4. „Martin's Token“ löschen.
-5. Mit dem neuen Token die Inventur fortsetzen („for weatherdata of station“).
+1. In der UI den Status aller Tokens prüfen — ist einer inaktiv, ist er der veröffentlichte → löschen (nicht reaktivieren).
+2. CLI reparieren: Wert von „Martin's Token“ (Passwort-Manager) oder neuen All-Access-Token erzeugen
+   (*Generate API Token → All Access*, sichern) → `influx config set -n local -t '<Token>'`, Test: `influx auth list`.
+3. Danach die Inventur fortsetzen.
 - Zum Auflisten wird ein All-Access-Token benötigt (vermutlich „Martin's Token“): `influx auth list -t '<Token>'`,
   danach CLI-Konfig aktualisieren: `influx config set -n <Name> -t <Token>`.
 - Kein All-Access-Token mehr vorhanden → Admin-Funktionen (Tokens/User anlegen) nicht möglich. Notfallzugang:
@@ -148,5 +148,5 @@ from(bucket: "iobroker")
 - **03.11.2026** – Nachtlauf geprüft: weatherStats V2.3.1 ohne Influx-Fehler (tag_des_jahres=306, Jahres-Ø 12,04),
   Writer 01:05 genau 1× geschrieben
 - **03.11.2026** – Alter InfluxDB-Token `N-aPZgG2…` (öffentlich in Commit `d2dbaa0`) geprüft: API liefert **401**
-  → derzeit nicht nutzbar. Vermutlich = „Martin's Token“ (inaktiv) → ersetzen + löschen, siehe Token-Inventur
+  → derzeit nicht nutzbar (inaktiv oder gelöscht; nicht „Martin's Token“, der ist aktiv), siehe Token-Inventur
 - **03.11.2026** – Update-Check-Fehler behoben (`v`-Präfix nur einseitig entfernt)

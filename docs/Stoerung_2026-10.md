@@ -83,7 +83,7 @@ Unabhängig davon kann der Regentage-Bug (siehe Backlog) die Regentage zu hoch z
 ## To do am 03.11.2026 (morgens)
 
 - [x] **Alten InfluxDB-Token `N-aPZgG2…` prüfen** — `GET /api/v2/buckets` mit dem Token liefert **401** → derzeit nicht nutzbar.
-  Er ist aber der CLI-/Admin-Token und vermutlich nur **inaktiv** („Martin's Token“) → ersetzen und löschen, siehe BACKLOG (Token-Inventur).
+  Er war in der CLI-Konfig eingetragen; „Martin's Token“ ist es nicht (aktiv). Inaktiv oder gelöscht → siehe BACKLOG (Token-Inventur).
 - [x] 01:03 `weatherStats_neu`: `TagesTemp_Durchschnitt (zeitgewichtet): 7.91`, `tag_des_jahres=306`, kein Influx-Fehler
 - [x] 01:05 `Wetter_aktuell_Monat_Jahr`: genau einmal `Daily weather statistics written`
 - [ ] Werte 12.01./27.01.2026 in `weather_*_running` ansehen (Duplikate, siehe Backlog)
