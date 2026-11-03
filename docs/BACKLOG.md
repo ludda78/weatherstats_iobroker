@@ -6,40 +6,27 @@ Offene Punkte, Bugs und Ideen. Erledigtes nach unten in „Erledigt“ verschieb
 
 ## Offen
 
-### [Sicherheit] Veröffentlichter InfluxDB-Token „for weatherdata of station“ — **beobachten, dann löschen**
-
-**Sachverhalt (Stand 03.11.2026):**
-- Token `N-aPZgG2…` = „**for weatherdata of station**“ (angelegt 25.06.2023).
-- Stand von **01.06.2026 bis 02.11.2026** im öffentlichen GitHub-Repo (Commit `d2dbaa0`, `Wetter_aktuell_Monat_Jahr.js`)
-  und war in dieser Zeit **aktiv**. Bleibt in der Git-Historie sichtbar.
-- Außerdem war er der Token der `influx`-CLI (`~/.influxdbv2/configs`).
-- **03.11.2026 vom User deaktiviert** → seitdem API-Antwort 401. CLI auf Operator-Token umgestellt.
-- Korrektur: Eine frühere Notiz („war schon ungültig, keine Gefahr“) war falsch. Der 401 kam von der Deaktivierung am selben Tag.
-
-**To do:**
-1. Rechte des Tokens prüfen: `influx auth list | grep "for weatherdata"` (letzte Spalte).
-2. War InfluxDB (Port 8086) aus dem Internet erreichbar (Portfreigabe, Reverse-Proxy, DynDNS …)?
-   - nein → Token war praktisch nicht nutzbar, Risiko vernachlässigbar.
-   - ja → Daten im Zeitraum 01.06.–03.11. auf ungewöhnliche Writes/Deletes prüfen.
-3. 1–2 Tage inaktiv lassen und beobachten (laufen Wetterdaten, Grafana, evcc, ioBroker weiter?) → dann **löschen**.
-
 ### [Sicherheit] Token-Inventur InfluxDB
 Stand `influx auth list` 03.11.2026:
 
 | Token | angelegt | Nutzung | Status |
 |---|---|---|---|
-| for weatherdata of station | 25.06.2023 | **veröffentlichter `N-aPZgG2…`**, war in Writer + CLI-Konfig | **inaktiv seit 03.11.** → löschen nach Beobachtung |
+| for weatherdata of station | 25.06.2023 | unklar — evtl. Altlast | **inaktiv seit 03.11.** (vom User deaktiviert) → 1–2 Tage beobachten, dann löschen |
 | Martin's Token | 03.06.2023 | **Operator-Token** aus `influx setup` (Wert im Passwort-Manager), jetzt in der CLI | aktiv, behalten, nie in Scripte |
 | token to read data from Influx for Grafana and iobroker | 16.01.2026 | Grafana + ioBroker lesen | aktiv |
 | write data from iobroker scripts to influxDB | ? | vermutlich `global_influx.js` (`w_nWg…`) | aktiv |
 | token for influx adapter in iobroker | 28.09.2026 | influxdb-Adapter | aktiv |
 | evcc / evcc reading only | 01.11.2026 | evcc | aktiv |
 
+To do:
+- „for weatherdata of station“: fällt in 1–2 Tagen nichts aus (Wetterdaten, Grafana, evcc, ioBroker) → löschen;
+  fällt etwas aus → wieder aktivieren und Fundstelle hier notieren.
+
 Hilfreiche Befehle (CLI läuft mit dem Operator-Token):
 - Übersicht ohne Token-Werte: `influx auth list --json | grep -E '"(description|status)"'`
+- Existiert ein Token noch? `influx auth list --json | grep -c '<erste 10 Zeichen>'` (0 = gelöscht)
 - Fundstellen eines Tokens auf dem PI: `sudo grep -rIl "<erste 10–15 Zeichen>" /opt/iobroker/iobroker-data/ /etc/telegraf/ /etc/grafana/ /etc/evcc* ~/`
   (+ Grafana *Connections → Data sources* prüfen, dort ggf. verschlüsselt).
-- Unklarer Token → inaktiv setzen, beobachten, dann löschen. Fällt etwas aus → wieder aktivieren, Fundstelle notieren.
 - Operator-Token verloren → Notfallzugang `influxd recovery auth create-operator` (InfluxDB vorher stoppen).
 
 ### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **gemeinsam ausarbeiten**
@@ -146,4 +133,7 @@ from(bucket: "iobroker")
 - **02.11.2026** – GitHub-Release [v2.3.1](https://github.com/ludda78/weatherstats_iobroker/releases/tag/v2.3.1) angelegt
 - **03.11.2026** – Nachtlauf geprüft: weatherStats V2.3.1 ohne Influx-Fehler (tag_des_jahres=306, Jahres-Ø 12,04),
   Writer 01:05 genau 1× geschrieben
+- **03.11.2026** – Veröffentlichter InfluxDB-Token `N-aPZgG2…` (Commit `d2dbaa0`, öffentlich seit 01.06.2026): existiert
+  in InfluxDB nicht mehr (`influx auth list` findet ihn nicht → gelöscht, Zeitpunkt unbekannt, vermutlich bei der
+  Umstellung 28.09.). War noch in der `influx`-CLI-Konfig eingetragen → CLI auf Operator-Token umgestellt.
 - **03.11.2026** – Update-Check-Fehler behoben (`v`-Präfix nur einseitig entfernt)
