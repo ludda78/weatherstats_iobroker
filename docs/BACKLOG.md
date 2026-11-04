@@ -31,7 +31,8 @@ Hilfreiche Befehle (CLI läuft mit dem Operator-Token):
 
 ### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **Stufe 1 umgesetzt**
 - **04.11.2026 entschieden:** Kanal **Telegram** (Pushover per `KANAL` umschaltbar), eigenes Script `src/Wetter_Watchdog.js`,
-  erste Version nur Idee 1 (Sofort-Alarm bei Log-Fehlern). Status: im Repo, auf dem PI einspielen + Test-DP auslösen.
+  erste Version nur Idee 1 (Sofort-Alarm bei Log-Fehlern). **Status: auf dem PI aktiv (Script `Wetter.wetterWatchdog`,
+  Instanz `telegram.1`), Testnachricht am 04.11.2026 erfolgreich.**
 - V0.2 (Wunsch User): nachts keine Push-Nachrichten → Nachtbericht um 7 Uhr; Influx-Verbindungsfehler (kommen öfter,
   evtl. nach Umstellung auf LAN hinfällig) werden ignoriert. Nach LAN-Umstellung ggf. `IGNORIEREN_ADAPTER = []` setzen.
 - Spätere Stufen (offen): Morgen-Check (Idee 2) — erkennt auch Läufe, die *gar nicht* stattfinden (z. B. Script gestoppt,
@@ -187,3 +188,5 @@ from(bucket: "iobroker")
 - **04.11.2026** – Regentage-Bug behoben (V2.3.2, Commit `b8afd57`); Abgleich mit Rohdaten: Regentage 2026 stimmen
   (Bug hat nie gegriffen), keine Datenkorrektur nötig
 - **04.11.2026** – Duplikate 12.01./27.01.2026 bewusst nicht bereinigt (unkritisch)
+- **04.11.2026** – Release [v2.3.2](https://github.com/ludda78/weatherstats_iobroker/releases/tag/v2.3.2) angelegt
+- **04.11.2026** – `Wetter_Watchdog.js` V0.2 auf dem PI aktiv, Telegram-Test erfolgreich (Überwachung Stufe 1)
