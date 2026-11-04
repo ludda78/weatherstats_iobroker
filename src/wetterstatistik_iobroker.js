@@ -21,6 +21,8 @@
 
 
         by ludda78
+    v2.3.2 - 04.11.2026 ~Fix: Regentag wurde an Tagen ohne Regen-Messpunkte in Influx fälschlich gezählt
+                        (Variable behielt den Wert des Vortags bzw. die Monatssumme)
     v2.3.1 - 02.11.2026 ~Fix: Kompatibilität mit influxdb-Adapter 5.x (Multi-Query wird jetzt einzeln abgesetzt,
                         Fehler "invalid statement: ," -> keine Tagesauswertung seit Adapter-Update)
     v2.3.0 - 29.06.2026 +Tagestemperatur-Extremwerte: höchster Tiefstwert (warmste Nacht), niedrigster Höchstwert,
@@ -166,7 +168,7 @@ if (!existsState(PRE_DP+'.VorTag.Sonnenscheindauer')) {
 }
 
 //Start des Scripts
-    const ScriptVersion = "V2.3.1";
+    const ScriptVersion = "V2.3.2";
     const dayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     let Tiefstwert, Hoechstwert, Temp_Durchschnitt, Max_Windboee, Max_Regenmenge, Regenmenge_Monat, warme_Tage, Sommertage;
     let heisse_Tage, Frost_Tage, kalte_Tage, Eistage, sehr_kalte_Tage, Wuestentage, Tropennaechte, Trockenperiode_akt;
@@ -377,7 +379,7 @@ influxMultiQuery(
     if (wind.length == 0) { Max_Windboee = 0; } else { Max_Windboee = Math.max(...wind); }     
 
   //Regen (Regentag = Mindestmenge größer oder gleich 0.1mm)
-    if (regen.length == 0) { Max_Regenmenge = 0; } 
+    if (regen.length == 0) { Max_Regenmenge = 0; Regentage = 0; }   // V2.3.2: sonst bleibt der alte Wert stehen -> falscher Regentag
       else { 
         Max_Regenmenge = regen[regen.length - 1];
         if (Max_Regenmenge >= 0.1) { Regentage = 1; } else { Regentage = 0; }

@@ -50,7 +50,9 @@ liefen ~5 Wochen, Regentage-Bug ggf. noch länger. Ideen (noch nicht entschieden
 Offene Fragen: Benachrichtigungskanal (Telegram, Pushover, E-Mail, …? welcher Adapter ist installiert),
 Umfang (erst 1+2, dann 3?), eigenes Script `Wetter_Watchdog.js` vs. Erweiterung von `weatherStats`.
 
-### [Bug] Regentage werden an Tagen ohne Regen-Messpunkte falsch gezählt — **als Nächstes**
+### [Bug] Regentage werden an Tagen ohne Regen-Messpunkte falsch gezählt — **Fix im Repo (V2.3.2), Abgleich offen**
+- **04.11.2026:** Fix in `wetterstatistik_iobroker.js` V2.3.2 (`Regentage = 0` im Zweig `regen.length == 0`).
+  Offen: auf dem PI einspielen; Regentage 2026 mit Rohdaten abgleichen (Abfragen unten), ggf. DPs/Influx korrigieren.
 - `Regentage` ist eine Script-globale Variable (`wetterstatistik_iobroker.js`, `let Regentage`).
 - In `main()` wird sie nur gesetzt, wenn Influx für den Tag `Regen_Tag`-Punkte liefert (`regen.length > 0`).
 - Liefert Influx keine Punkte, behält die Variable ihren alten Wert — nach dem Hochzählen ist das die
@@ -59,6 +61,35 @@ Umfang (erst 1+2, dann 3?), eigenes Script `Wetter_Watchdog.js` vs. Erweiterung 
 - Fix: `Regentage = 0;` im Zweig `regen.length == 0` (bzw. vor der Auswertung zurücksetzen).
 - Danach prüfen, ob Regentage 2026 zu hoch sind (Abgleich mit Tagen `Regen_Tag >= 0.1` in Influx).
 - `Ausfall_Nachholen.js` ist nicht betroffen (prüft `regenRows.length > 0`).
+
+```flux
+// Abgleich 1: echte Regentage pro Monat aus den Rohdaten (letzter Regen_Tag-Wert des Tages >= 0.1)
+// + Tage ohne Regen-Messpunkte (nur an diesen Tagen konnte der Bug zuschlagen)
+import "timezone"
+option location = timezone.location(name: "Europe/Berlin")
+
+from(bucket: "iobroker")
+  |> range(start: 2026-01-01T00:00:00+01:00, stop: 2026-11-01T00:00:00+01:00)
+  |> filter(fn: (r) => r._measurement == "wetterstation" and r._field == "Regen_Tag")
+  |> aggregateWindow(every: 1d, fn: last, createEmpty: true, timeSrc: "_start")
+  |> map(fn: (r) => ({_time: r._time,
+        regentag:   if exists r._value and r._value >= 0.1 then 1 else 0,
+        ohne_daten: if exists r._value then 0 else 1}))
+  |> window(every: 1mo)
+  |> reduce(identity: {regentage: 0, tage_ohne_daten: 0},
+            fn: (r, accumulator) => ({regentage: accumulator.regentage + r.regentag,
+                                      tage_ohne_daten: accumulator.tage_ohne_daten + r.ohne_daten}))
+  |> keep(columns: ["_start", "regentage", "tage_ohne_daten"])
+```
+
+```flux
+// Abgleich 2: was die Statistik je Monat gespeichert hat
+from(bucket: "iobroker")
+  |> range(start: 2026-01-01T00:00:00Z)
+  |> filter(fn: (r) => r._measurement == "wetterstatistik_2026" and r._field =~ /^Regentage_/)
+  |> last()
+  |> keep(columns: ["_field", "_value"])
+```
 
 ### [Daten] Doppelte Punkte in Influx seit Umstellung auf `global_influx.js`
 - Ursache: `influxWrite()` gab nichts zurück → Writer werteten jeden Lauf als Fehlschlag und

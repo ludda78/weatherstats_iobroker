@@ -1,7 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [Unreleased] – Script-Version V2.3.2
 ### Fixed
+- Regentage: An Tagen ohne `Regen_Tag`-Punkte in Influx wurde `Regentage` nicht zurückgesetzt und behielt den
+  Wert des Vortags (nach dem Hochzählen die Monatssumme, also > 0) → es wurde fälschlich ein Regentag gezählt
+  (Monat + Jahr). Jetzt `Regentage = 0` in diesem Fall.
 - Update-Check: `v` wird jetzt bei Release-Tag **und** Script-Version entfernt. Vorher wurde `2.3.1` mit `V2.3.1`
   verglichen → „Neue Script-Version verfügbar“ bei jeder Version (gesehen am 03.11.2026).
 
