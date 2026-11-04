@@ -79,7 +79,8 @@ Umfang (erst 1+2, dann 3?), eigenes Script `Wetter_Watchdog.js` vs. Erweiterung 
 - **Aufräum-Script:** `src/Duplikate_Aufraeumen.js` (DRY_RUN zuerst) — löscht 29.09.–25.10. jeweils 01:06–01:59
   in beiden `*_running` sowie 01.10. 01:49–02:30 in `wetterstatistik_2026`. Status: **erledigt 02.11.2026 22:44**
   (55 Fenster × 2 = 110 Punkte gelöscht).
-- Offen: 12.01./27.01. — erst Werte beider Punkte ansehen, dann entscheiden.
+- 12.01./27.01.: **bewusst nicht bereinigt** (Entscheidung 04.11.2026) — nur 2 Einzelpunkte, Statistik selbst
+  nicht betroffen, nur `mean()`/`count()` über diese Tage minimal verzerrt. Bei Bedarf später mit den Abfragen unten nachholen.
 
 ```flux
 // Punkte pro deutschem Kalendertag (Zeitstempel = Fensterende, also 00:00 des Folgetags)
