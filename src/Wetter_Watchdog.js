@@ -137,8 +137,8 @@ function nachricht(titel, text, wichtig) {
     console.log(`[Watchdog] ${titel}\n${text}`);   // bewusst log, nicht warn/error
 }
 
-// Test: Datenpunkt Watchdog.Test auf true setzen -> Testnachricht
-on({ id: DP + '.Test', val: true, ack: false }, () => {
+// Test: Datenpunkt Watchdog.Test auf true setzen -> Testnachricht (egal ob mit oder ohne "Bestätigt"/ack)
+on({ id: DP + '.Test', val: true }, () => {
     nachricht('Wetterstatistik: Test', 'Watchdog läuft, Benachrichtigung funktioniert ✅', false);
     setState(DP + '.Test', false, true);
 });
