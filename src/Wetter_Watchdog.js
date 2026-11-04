@@ -20,7 +20,7 @@
 
 // *** Einstellungen ************************************************************************************
 const KANAL            = 'telegram';        // 'telegram' | 'pushover' | 'keiner' (nur Datenpunkte/Log)
-const TELEGRAM_INSTANZ = 'telegram.0';
+const TELEGRAM_INSTANZ = 'telegram.1';      // Instanz anpassen (Objekte -> Instanzen)
 const TELEGRAM_USER    = '';                // '' = an alle Telegram-Benutzer, sonst Benutzername
 const PUSHOVER_INSTANZ = 'pushover.0';
 
