@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased] – Script-Version V2.3.2
+## [Unreleased]
+
+## [2.3.2] – 2026-11-04
 ### Fixed
 - Regentage: An Tagen ohne `Regen_Tag`-Punkte in Influx wurde `Regentage` nicht zurückgesetzt und behielt den
   Wert des Vortags (nach dem Hochzählen die Monatssumme, also > 0) → es wurde fälschlich ein Regentag gezählt
