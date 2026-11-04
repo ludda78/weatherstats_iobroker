@@ -32,6 +32,8 @@ Hilfreiche Befehle (CLI läuft mit dem Operator-Token):
 ### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **Stufe 1 umgesetzt**
 - **04.11.2026 entschieden:** Kanal **Telegram** (Pushover per `KANAL` umschaltbar), eigenes Script `src/Wetter_Watchdog.js`,
   erste Version nur Idee 1 (Sofort-Alarm bei Log-Fehlern). Status: im Repo, auf dem PI einspielen + Test-DP auslösen.
+- V0.2 (Wunsch User): nachts keine Push-Nachrichten → Nachtbericht um 7 Uhr; Influx-Verbindungsfehler (kommen öfter,
+  evtl. nach Umstellung auf LAN hinfällig) werden ignoriert. Nach LAN-Umstellung ggf. `IGNORIEREN_ADAPTER = []` setzen.
 - Spätere Stufen (offen): Morgen-Check (Idee 2) — erkennt auch Läufe, die *gar nicht* stattfinden (z. B. Script gestoppt,
   JS-Instanz hängt), was der Log-Alarm prinzipbedingt nicht sieht; Plausibilität (3); `Letzter_Erfolg` (5).
 Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen; Influx-Duplikate

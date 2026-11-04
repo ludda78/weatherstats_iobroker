@@ -4,6 +4,9 @@
 ### Added
 - `Wetter_Watchdog.js` V0.1: Sofort-Alarm per Telegram (oder Pushover) bei Fehlern/Warnungen der Wetter-Scripte
   und Fehlern des influxdb-Adapters; gebündelt (2 Min), gleiche Meldung max. alle 6 h; DPs unter `Statistik.Wetter.Watchdog`
+- `Wetter_Watchdog.js` V0.2: Nachtruhe 22–7 Uhr (Meldungen werden gesammelt und um 7 Uhr als „Nachtbericht“ geschickt);
+  Verbindungsfehler des influxdb-Adapters (ECONNREFUSED, Timeout, …) werden ignoriert — bleibt Influx wirklich weg,
+  melden die Wetter-Scripte selbst einen Fehler
 
 ## [2.3.2] – 2026-11-04
 ### Fixed

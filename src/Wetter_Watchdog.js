@@ -1,5 +1,7 @@
 /*
- * Wetter_Watchdog.js  –  V0.1  (04.11.2026, ludda78)
+ * Wetter_Watchdog.js  –  V0.2  (04.11.2026, ludda78)
+ *   V0.2: Nachtruhe (Meldungen 22–7 Uhr als Nachtbericht um 7 Uhr), Influx-Verbindungsfehler ignorieren
+ *   V0.1: Sofort-Alarm bei Log-Fehlern
  *
  * Sofort-Alarm, wenn die Wetter-Scripte oder der influxdb-Adapter Fehler/Warnungen ins Log schreiben.
  * Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen
@@ -31,6 +33,15 @@ const STUFEN = {                            // welche Log-Stufen je Quelle melde
     adapter: ['error'],                     // Adapter: nur Fehler
 };
 
+// Nachtruhe: Meldungen in dieser Zeit werden gesammelt und um RUHE_BIS als ein "Nachtbericht" geschickt
+// (nichts geht verloren). RUHE_VON = RUHE_BIS -> keine Nachtruhe.
+const RUHE_VON = 22;                        // Stunde (0–23)
+const RUHE_BIS = 7;                         // Stunde (0–23)
+
+// Meldungen, die gar nicht gemeldet werden (nur für ADAPTER). Verbindungsabbrüche zur InfluxDB sind meist kurz;
+// bleibt Influx wirklich weg, scheitern die Wetter-Scripte selbst und melden das. Leeres Array = alles melden.
+const IGNORIEREN_ADAPTER = [/ECONNREFUSED|ECONNRESET|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|EAI_AGAIN|socket hang up|timeout|connect/i];
+
 const BUENDEL_SEK = 120;                    // Meldungen so lange sammeln, dann eine Nachricht
 const SPERRE_STD  = 6;                      // gleiche Meldung frühestens nach x Stunden erneut melden
 const MAX_ZEILEN  = 10;                     // max. Meldungen pro Nachricht
@@ -51,7 +62,9 @@ createState(DP + '.Test', false, { name: 'Testnachricht senden', type: 'boolean'
 
 function quelleVon(data) {
     if (ADAPTER.includes(data.from)) {
-        return STUFEN.adapter.includes(data.severity) ? data.from : null;
+        if (!STUFEN.adapter.includes(data.severity)) { return null; }
+        if (IGNORIEREN_ADAPTER.some(re => re.test(data.message || ''))) { return null; }
+        return data.from;
     }
     const m = scriptRegex.exec(data.message || '');
     if (m && STUFEN.script.includes(data.severity)) { return m[1]; }
@@ -75,10 +88,18 @@ function logEmpfangen(data) {
     zuletztGemeldet[schluessel] = jetzt;
 
     puffer.push({ zeit: data.ts || jetzt, quelle, stufe: data.severity, text });
+    if (istRuhezeit()) { return; }          // wird um RUHE_BIS als Nachtbericht verschickt
     if (!timer) { timer = setTimeout(senden, BUENDEL_SEK * 1000); }
 }
 
-function senden() {
+function istRuhezeit() {
+    if (RUHE_VON === RUHE_BIS) { return false; }
+    const h = new Date().getHours();
+    return RUHE_VON > RUHE_BIS ? (h >= RUHE_VON || h < RUHE_BIS)     // über Mitternacht, z. B. 22–7
+                               : (h >= RUHE_VON && h < RUHE_BIS);
+}
+
+function senden(praefix) {
     timer = null;
     if (!puffer.length) { return; }
     const eintraege = puffer.splice(0, puffer.length);
@@ -88,7 +109,7 @@ function senden() {
         `${formatDate(new Date(e.zeit), 'hh:mm')} ${e.stufe === 'error' ? '❌' : '⚠️'} ${e.quelle}: ${e.text}`);
     if (eintraege.length > MAX_ZEILEN) { zeilen.push(`… und ${eintraege.length - MAX_ZEILEN} weitere (siehe Log)`); }
 
-    const titel = `Wetterstatistik: ${fehler ? fehler + ' Fehler' : ''}${fehler && eintraege.length > fehler ? ', ' : ''}` +
+    const titel = `Wetterstatistik${praefix ? ' ' + praefix : ''}: ${fehler ? fehler + ' Fehler' : ''}${fehler && eintraege.length > fehler ? ', ' : ''}` +
                   `${eintraege.length > fehler ? (eintraege.length - fehler) + ' Warnung(en)' : ''}`;
     nachricht(titel, zeilen.join('\n'), fehler > 0);
 
@@ -121,6 +142,11 @@ on({ id: DP + '.Test', val: true, ack: false }, () => {
     nachricht('Wetterstatistik: Test', 'Watchdog läuft, Benachrichtigung funktioniert ✅', false);
     setState(DP + '.Test', false, true);
 });
+
+// Nachtbericht: in der Ruhezeit gesammelte Meldungen am Ende der Ruhezeit verschicken
+if (RUHE_VON !== RUHE_BIS) {
+    schedule(`0 ${RUHE_BIS} * * *`, () => { if (timer) { clearTimeout(timer); } senden('(Nachtbericht)'); });
+}
 
 // Tageszähler um Mitternacht zurücksetzen
 schedule('0 0 * * *', () => setState(DP + '.Anzahl_heute', 0, true));
