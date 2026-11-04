@@ -50,9 +50,18 @@ liefen ~5 Wochen, Regentage-Bug ggf. noch länger. Ideen (noch nicht entschieden
 Offene Fragen: Benachrichtigungskanal (Telegram, Pushover, E-Mail, …? welcher Adapter ist installiert),
 Umfang (erst 1+2, dann 3?), eigenes Script `Wetter_Watchdog.js` vs. Erweiterung von `weatherStats`.
 
-### [Bug] Regentage werden an Tagen ohne Regen-Messpunkte falsch gezählt — **Fix im Repo (V2.3.2), Abgleich offen**
+### [Bug] Regentage werden an Tagen ohne Regen-Messpunkte falsch gezählt — **Fix im Repo (V2.3.2), nur noch auf PI einspielen**
 - **04.11.2026:** Fix in `wetterstatistik_iobroker.js` V2.3.2 (`Regentage = 0` im Zweig `regen.length == 0`).
-  Offen: auf dem PI einspielen; Regentage 2026 mit Rohdaten abgleichen (Abfragen unten), ggf. DPs/Influx korrigieren.
+- **Abgleich 04.11.2026 (Abfragen unten): 2026 nicht betroffen, keine Korrektur nötig.**
+  `tage_ohne_daten` = 0 in allen Monaten (der influxdb-Adapter schreibt `Regen_Tag` jeden Tag) → der Bug konnte nie greifen.
+
+  | Monat 2026 | Jan | Feb | Mär | Apr | Mai | Jun | Jul | Aug | Sep | Okt |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | Rohdaten (letzter `Regen_Tag` ≥ 0.1) | 9 | 16 | 13 | 8 | 13 | 14 | 13 | 10 | 10 | 19 |
+  | Statistik (`wetterstatistik_2026`) | 9 | 16 | 13 | 8 | 13 | 14 | 13 | **9** | 10 | 19 |
+
+  August −1: vermutlich Grenzfall am Tagesrand (Script liest 00:01:12–23:59:59, Abfrage den ganzen Tag) — nicht weiter verfolgt.
+- Der Fix bleibt trotzdem sinnvoll (Schutz, falls Influx einmal keine Regenpunkte für einen Tag hat, z. B. Adapter-Ausfall).
 - `Regentage` ist eine Script-globale Variable (`wetterstatistik_iobroker.js`, `let Regentage`).
 - In `main()` wird sie nur gesetzt, wenn Influx für den Tag `Regen_Tag`-Punkte liefert (`regen.length > 0`).
 - Liefert Influx keine Punkte, behält die Variable ihren alten Wert — nach dem Hochzählen ist das die
@@ -169,3 +178,6 @@ from(bucket: "iobroker")
   in InfluxDB nicht mehr (`influx auth list` findet ihn nicht → gelöscht, Zeitpunkt unbekannt, vermutlich bei der
   Umstellung 28.09.). War noch in der `influx`-CLI-Konfig eingetragen → CLI auf Operator-Token umgestellt.
 - **03.11.2026** – Update-Check-Fehler behoben (`v`-Präfix nur einseitig entfernt), auch auf dem PI eingespielt
+- **04.11.2026** – Regentage-Bug behoben (V2.3.2, Commit `b8afd57`); Abgleich mit Rohdaten: Regentage 2026 stimmen
+  (Bug hat nie gegriffen), keine Datenkorrektur nötig
+- **04.11.2026** – Duplikate 12.01./27.01.2026 bewusst nicht bereinigt (unkritisch)

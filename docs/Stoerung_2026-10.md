@@ -72,7 +72,8 @@ Zwei voneinander unabhängige Fehler, die zufällig zeitgleich auffielen:
 - Der Ausfall 25.10.–01.11. wurde mit derselben Rechenlogik aus den Rohdaten nachgeholt →
   Monats-/Jahresdurchschnitt entsprechen dem Wert ohne Ausfall.
 
-Unabhängig davon kann der Regentage-Bug (siehe Backlog) die Regentage zu hoch zählen.
+Der Regentage-Bug (siehe Backlog) hat 2026 nicht gegriffen — Abgleich mit den Rohdaten am 04.11.2026 ergab
+übereinstimmende Regentage; behoben in V2.3.2.
 
 ## Nicht wiederherstellbar
 
