@@ -29,7 +29,11 @@ Hilfreiche Befehle (CLI läuft mit dem Operator-Token):
   (+ Grafana *Connections → Data sources* prüfen, dort ggf. verschlüsselt).
 - Operator-Token verloren → Notfallzugang `influxd recovery auth create-operator` (InfluxDB vorher stoppen).
 
-### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **gemeinsam ausarbeiten**
+### [Feature] Überwachung: Fehler sollen nicht unbemerkt bleiben — **Stufe 1 umgesetzt**
+- **04.11.2026 entschieden:** Kanal **Telegram** (Pushover per `KANAL` umschaltbar), eigenes Script `src/Wetter_Watchdog.js`,
+  erste Version nur Idee 1 (Sofort-Alarm bei Log-Fehlern). Status: im Repo, auf dem PI einspielen + Test-DP auslösen.
+- Spätere Stufen (offen): Morgen-Check (Idee 2) — erkennt auch Läufe, die *gar nicht* stattfinden (z. B. Script gestoppt,
+  JS-Instanz hängt), was der Log-Alarm prinzipbedingt nicht sieht; Plausibilität (3); `Letzter_Erfolg` (5).
 Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen; Influx-Duplikate
 liefen ~5 Wochen, Regentage-Bug ggf. noch länger. Ideen (noch nicht entschieden):
 
