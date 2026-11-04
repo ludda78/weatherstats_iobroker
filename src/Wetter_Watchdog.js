@@ -40,7 +40,9 @@ const RUHE_BIS = 7;                         // Stunde (0–23)
 
 // Meldungen, die gar nicht gemeldet werden (nur für ADAPTER). Verbindungsabbrüche zur InfluxDB sind meist kurz;
 // bleibt Influx wirklich weg, scheitern die Wetter-Scripte selbst und melden das. Leeres Array = alles melden.
-const IGNORIEREN_ADAPTER = [/ECONNREFUSED|ECONNRESET|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|EAI_AGAIN|socket hang up|timeout|connect/i];
+// Seit 04.11.2026 zum Beobachten eingeschaltet (alles melden). Bei zu vielen Verbindungsmeldungen wieder aktivieren:
+// const IGNORIEREN_ADAPTER = [/ECONNREFUSED|ECONNRESET|ETIMEDOUT|EHOSTUNREACH|ENOTFOUND|EAI_AGAIN|socket hang up|timeout|connect/i];
+const IGNORIEREN_ADAPTER = [];
 
 const BUENDEL_SEK = 120;                    // Meldungen so lange sammeln, dann eine Nachricht
 const SPERRE_STD  = 6;                      // gleiche Meldung frühestens nach x Stunden erneut melden

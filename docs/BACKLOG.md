@@ -35,6 +35,8 @@ Hilfreiche Befehle (CLI läuft mit dem Operator-Token):
   Instanz `telegram.1`), Testnachricht am 04.11.2026 erfolgreich.**
 - V0.2 (Wunsch User): nachts keine Push-Nachrichten → Nachtbericht um 7 Uhr; Influx-Verbindungsfehler (kommen öfter,
   evtl. nach Umstellung auf LAN hinfällig) werden ignoriert. Nach LAN-Umstellung ggf. `IGNORIEREN_ADAPTER = []` setzen.
+- **04.11.2026:** `IGNORIEREN_ADAPTER = []` gesetzt → Influx-Verbindungsfehler werden wieder gemeldet; User beobachtet,
+  wie oft sie kommen. Bei zu vielen Meldungen die auskommentierte Filterzeile wieder aktivieren.
 - Spätere Stufen (offen): Morgen-Check (Idee 2) — erkennt auch Läufe, die *gar nicht* stattfinden (z. B. Script gestoppt,
   JS-Instanz hängt), was der Log-Alarm prinzipbedingt nicht sieht; Plausibilität (3); `Letzter_Erfolg` (5).
 Anlass: Störung Okt. 2026 lief ~1 Woche unbemerkt, obwohl jede Nacht Fehler im Log standen; Influx-Duplikate
