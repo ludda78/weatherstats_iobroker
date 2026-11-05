@@ -1,6 +1,15 @@
 # Changelog
 
-## [Unreleased]
+## [Unreleased] – Script-Version V2.3.3
+### Changed
+- Log gekürzt: Trockenperiode (vorher 8 Zeilen) und Jahresdurchschnitt (`[JAHRES-DEBUG]`) je 1 Zeile;
+  die ausführlichen Rechenschritte nur noch mit neuer Einstellung `DEBUG_LOG = true`
+
+### Fixed
+- Log-Meldungen ohne Wert: ioBroker-`console.log/warn/error` gibt nur das **erste** Argument aus →
+  `[Jahreswerte] Regenmenge gesetzt:` und `Daily weather statistics written:` waren leer, in
+  `monthlyStatsCreateApply_V1.js` fehlte der Fehlertext. Jetzt als ein zusammengesetzter Text.
+
 ### Added
 - `Wetter_Watchdog.js` V0.1: Sofort-Alarm per Telegram (oder Pushover) bei Fehlern/Warnungen der Wetter-Scripte
   und Fehlern des influxdb-Adapters; gebündelt (2 Min), gleiche Meldung max. alle 6 h; DPs unter `Statistik.Wetter.Watchdog`

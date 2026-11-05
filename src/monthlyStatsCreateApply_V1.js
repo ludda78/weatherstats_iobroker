@@ -40,7 +40,7 @@ const monatswerteAnlegen = async () => {
         const sourceState = await getStateAsync(sourcePath);
         sourceJson = sourceState && sourceState.val ? JSON.parse(sourceState.val) : {};
     } catch (err) {
-        console.warn(`Keine oder ungültige JSON-Quelle unter ${sourcePath}:`, err.message);
+        console.warn(`Keine oder ungültige JSON-Quelle unter ${sourcePath}: ${err.message}`);
     }
 
     for (const [dp, common] of Object.entries(dataPoints)) {
@@ -62,7 +62,7 @@ const monatswerteAnlegen = async () => {
                 console.log(`Kein Wert zum Setzen für: ${id}`);
             }
         } catch (error) {
-            console.error(`Fehler bei ${id}:`, error.message);
+            console.error(`Fehler bei ${id}: ${error.message}`);
         }
     }
 

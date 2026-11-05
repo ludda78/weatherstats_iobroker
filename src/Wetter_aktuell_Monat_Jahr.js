@@ -75,7 +75,8 @@ async function writeMonthlyAndYearlyStats(attempt = 1) {
 
     const ok = await influxWrite(lines.join('\n'), 'weather_stats');
     if (ok) {
-        console.log('Daily weather statistics written:', lines.join(' | '));
+        // ioBroker-console.log gibt nur das 1. Argument aus -> Text zusammensetzen
+        console.log(`Daily weather statistics written (${lines.map(l => l.split(/[ ,]/)[0]).join(', ')})`);
     } else if (attempt < 3) {
         console.warn(`Weather statistics: Versuch ${attempt} fehlgeschlagen, neuer Versuch in ${RETRY_MIN} Min`);
         setTimeout(() => writeMonthlyAndYearlyStats(attempt + 1), RETRY_MIN * 60 * 1000);

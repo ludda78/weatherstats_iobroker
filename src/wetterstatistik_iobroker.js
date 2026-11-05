@@ -21,6 +21,8 @@
 
 
         by ludda78
+    v2.3.3 - 05.11.2026 ~Log gekürzt: Trockenperiode + Jahresdurchschnitt je 1 Zeile, Details nur mit DEBUG_LOG = true
+                        ~Fix: "[Jahreswerte] Regenmenge gesetzt:" ohne Wert (console.log nimmt nur 1 Argument)
     v2.3.2 - 04.11.2026 ~Fix: Regentag wurde an Tagen ohne Regen-Messpunkte in Influx fälschlich gezählt
                         (Variable behielt den Wert des Vortags bzw. die Monatssumme)
     v2.3.1 - 02.11.2026 ~Fix: Kompatibilität mit influxdb-Adapter 5.x (Multi-Query wird jetzt einzeln abgesetzt,
@@ -113,7 +115,8 @@
                                                                  [default: [WERT] im [MONAT] [JAHR] ] erzeugt als Beispiel im DP die 
                                                                  Ausgabe: "22.42 °C im Juni 2020"
                                                                 */
-    const ZEITPLAN = "3 1 * * *";                       // wann soll die Statistik erstellt werden (Minuten Stunde * * *) [default 1:03 Uhr] 
+    const ZEITPLAN = "3 1 * * *";                       // wann soll die Statistik erstellt werden (Minuten Stunde * * *) [default 1:03 Uhr]
+    const DEBUG_LOG = false;                            // true = ausführliche Rechenschritte (Trockenperiode, Jahresdurchschnitt) ins Log [default: false]
 // *** ENDE User-Einstellungen *****************************************************************************************************************************
 
 
@@ -168,7 +171,7 @@ if (!existsState(PRE_DP+'.VorTag.Sonnenscheindauer')) {
 }
 
 //Start des Scripts
-    const ScriptVersion = "V2.3.2";
+    const ScriptVersion = "V2.3.3";
     const dayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     let Tiefstwert, Hoechstwert, Temp_Durchschnitt, Max_Windboee, Max_Regenmenge, Regenmenge_Monat, warme_Tage, Sommertage;
     let heisse_Tage, Frost_Tage, kalte_Tage, Eistage, sehr_kalte_Tage, Wuestentage, Tropennaechte, Trockenperiode_akt;
@@ -193,7 +196,7 @@ function main() {
         const regenJahr = getState(WET_DP_BROKER + '.Regen_Jahr').val;
         if (!isNaN(regenJahr)) {
             setState(PRE_DP + '.Jahreswerte.Regenmenge', regenJahr, true);
-            console.log('[Jahreswerte] Regenmenge gesetzt:', regenJahr);
+            console.log('[Jahreswerte] Regenmenge gesetzt: ' + regenJahr);   // ioBroker-console.log gibt nur das 1. Argument aus
         }
     }
     if (existsState(WET_DP_BROKER + '.Sonnenschein_Jahr')) {
@@ -490,15 +493,15 @@ influxMultiQuery(
 			const JahresTemp_Durchschnitt =
 				Math.round(unrounded * 100) / 100;
 
-			log(
-				`[JAHRES-DEBUG] ELSE | tag_des_jahres=${tag_des_jahres}` +
+			debugLog(
+				`[JAHRES-DEBUG] tag_des_jahres=${tag_des_jahres}` +
 				` | prevYearAvg=${prevYearAvg}` +
 				` | Temp_Durchschnitt=${Temp_Durchschnitt}` +
 				` | numerator=(${prevYearAvg} * ${tag_des_jahres - 1}) + ${Temp_Durchschnitt} = ${numerator}` +
 				` | unrounded=${unrounded}` +
-				` | rounded=${JahresTemp_Durchschnitt}`,
-				'info'
+				` | rounded=${JahresTemp_Durchschnitt}`
 			);
+			console.log(`Jahres-Ø: ${JahresTemp_Durchschnitt} °C (vorher ${prevYearAvg}, Tag ${tag_des_jahres} des Jahres)`);
 
 			setState(
 				PRE_DP + '.Jahreswerte.Temperatur_Durchschnitt',
@@ -521,7 +524,7 @@ influxMultiQuery(
 		
          let letzterRegenStr = getState(WET_DP_BROKER + '.Info.Letzter_Regen').val;
          let letzterRegenDatum = null;
-         console.log('[Trockenperiode] Raw-Wert von Info.Letzter_Regen: ' + letzterRegenStr);
+         debugLog('[Trockenperiode] Raw-Wert von Info.Letzter_Regen: ' + letzterRegenStr);
 
          
         // Überprüfen, ob das Format dem Muster "TT.MM.JJJJ SS:MM" entspricht
@@ -543,8 +546,8 @@ influxMultiQuery(
          }
 
    function BerechnungTrockenperiode() {
-       console.log('[Trockenperiode] letzterRegenDatum: ' + letzterRegenDatum);
-        console.log('[Trockenperiode] currentDate: ' + currentDate);
+       debugLog('[Trockenperiode] letzterRegenDatum: ' + letzterRegenDatum);
+        debugLog('[Trockenperiode] currentDate: ' + currentDate);
 
     if (letzterRegenDatum !== null) {
         if (letzterRegenDatum > currentDate) {
@@ -558,16 +561,15 @@ influxMultiQuery(
                 Trockenperiode_akt += daysInLastYear;
             }
         }
-        console.log('[Trockenperiode] dayOfYear(currentDate): ' + dayOfYear(currentDate));
-        console.log('[Trockenperiode] dayOfYear(letzterRegenDatum): ' + dayOfYear(letzterRegenDatum));
-        console.log('[Trockenperiode] Berechnete Trockenperiode: ' + Trockenperiode_akt);
+        debugLog('[Trockenperiode] dayOfYear(currentDate): ' + dayOfYear(currentDate));
+        debugLog('[Trockenperiode] dayOfYear(letzterRegenDatum): ' + dayOfYear(letzterRegenDatum));
             let Trockenperiode_alt = getState(PRE_DP + '.Jahreswerte.Trockenperiode').val;
-            console.log('[Trockenperiode] Alter Wert: ' + Trockenperiode_alt);
-
-            if (Trockenperiode_akt >= Trockenperiode_alt) {
-                console.log('[Trockenperiode] Neuer Wert wird gesetzt!');
+            let neuesJahresMax = Trockenperiode_akt >= Trockenperiode_alt;
+            if (neuesJahresMax) {
                 setState(PRE_DP + '.Jahreswerte.Trockenperiode', Trockenperiode_akt, true);
             }
+            console.log(`[Trockenperiode] aktuell ${Trockenperiode_akt} Tage (letzter Regen ${letzterRegenStr}), ` +
+                        (neuesJahresMax ? 'neues Jahresmaximum!' : `Jahresmaximum ${Trockenperiode_alt}`));
     }
     setState(PRE_DP + '.Info.Trockenperiode_aktuell', Trockenperiode_akt, true);
    }
@@ -590,6 +592,10 @@ influxMultiQuery(
 
 } //end function main
 
+// Ausführliche Debug-Ausgaben nur bei DEBUG_LOG = true
+function debugLog(text) {
+    if (DEBUG_LOG) { console.log(text); }
+}
 
 // Mehrere Flux-Abfragen (durch ';' getrennt) einzeln an den InfluxDB-Adapter senden und
 // das Ergebnis im gewohnten Format { result: [[...], [...], ...] } zurückgeben.
