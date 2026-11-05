@@ -1,6 +1,8 @@
 # Changelog
 
-## [Unreleased] – Script-Version V2.3.3
+## [Unreleased]
+
+## [2.3.3] – 2026-11-05
 ### Changed
 - Log gekürzt: Trockenperiode (vorher 8 Zeilen) und Jahresdurchschnitt (`[JAHRES-DEBUG]`) je 1 Zeile;
   die ausführlichen Rechenschritte nur noch mit neuer Einstellung `DEBUG_LOG = true`
