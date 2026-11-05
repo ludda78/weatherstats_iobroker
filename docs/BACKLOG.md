@@ -192,3 +192,5 @@ from(bucket: "iobroker")
 - **04.11.2026** – Duplikate 12.01./27.01.2026 bewusst nicht bereinigt (unkritisch)
 - **04.11.2026** – Release [v2.3.2](https://github.com/ludda78/weatherstats_iobroker/releases/tag/v2.3.2) angelegt
 - **04.11.2026** – `Wetter_Watchdog.js` V0.2 auf dem PI aktiv, Telegram-Test erfolgreich (Überwachung Stufe 1)
+- **05.11.2026** – V2.3.3: Log gekürzt (`DEBUG_LOG`), leere Log-Werte behoben (console.log nimmt nur 1 Argument);
+  auf dem PI eingespielt, Release [v2.3.3](https://github.com/ludda78/weatherstats_iobroker/releases/tag/v2.3.3)
